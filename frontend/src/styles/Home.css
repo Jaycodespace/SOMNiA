@@ -1,0 +1,55 @@
+/* Home Page Container */
+.home-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    width: 100vw;
+    background-color: #f3f4f6; /* Light gray background */
+}
+
+/* Title */
+.main-title {
+    font-size: 3rem;
+    font-weight: bold;
+    color: #2563eb;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+/* Buttons Container */
+.home-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+
+/* Buttons */
+.btn {
+    padding: 12px 24px;
+    border-radius: 8px;
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.2s ease-in-out;
+}
+
+/* Login Button */
+.btn-secondary {
+    background-color: #4b5563;
+}
+
+.btn-secondary:hover {
+    background-color: #374151;
+}
+
+/* Signup Button */
+.btn-primary {
+    background-color: #2563eb;
+}
+
+.btn-primary:hover {
+    background-color: #1d4ed8;
+}
