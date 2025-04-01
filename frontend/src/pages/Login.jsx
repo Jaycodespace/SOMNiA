@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { login, reset, getUserInfo } from "../features/auth/authSlice";
 import { toast } from "react-toastify";
 import Spinner from "../components/Spinner";
-import "../styles/Login.css"; // Import the CSS file
+import "../styles/Login.css";
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
@@ -31,19 +31,21 @@ const LoginPage = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     const userData = { email, password };
-    dispatch(login(userData));
+    dispatch(login(userData)).then(() => {
+      // Navigate only after the login action is successful
+      if (isSuccess && user) {
+        navigate("/dashboard");
+      }
+    });
   };
 
   useEffect(() => {
     if (isError) {
       toast.error(message);
     }
-    if (isSuccess || user) {
-      navigate("/dashboard");
-    }
     dispatch(reset());
     dispatch(getUserInfo());
-  }, [isError, isSuccess, user, navigate, dispatch]);
+  }, [isError, dispatch]); // Removed isSuccess and user from dependency array
 
   return (
     <div className="auth__container">
