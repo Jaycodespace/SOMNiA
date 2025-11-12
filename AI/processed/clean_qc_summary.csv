@@ -1,0 +1,13 @@
+file,person_id,status,rows_after_clean,rows_dropped,na_after_clean_total,note
+1487.csv,1487,ok,290,0,0,
+2201.csv,2201,ok,282,8,0,
+2210.csv,2210,ok,280,10,0,
+3379.csv,3379,ok,286,4,0,
+4891.csv,4891,ok,290,0,0,
+5359.csv,5359,ok,289,1,0,
+5544.csv,5544,ok,283,7,0,
+6008.csv,6008,ok,288,2,0,
+6777.csv,6777,ok,285,5,0,
+7359.csv,7359,ok,290,0,0,
+8176.csv,8176,ok,284,6,0,
+9775.csv,9775,ok,290,0,0,

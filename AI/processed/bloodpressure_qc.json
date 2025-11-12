@@ -1,0 +1,22 @@
+{
+  "rows_before":374,
+  "rows_after":374,
+  "rows_dropped":0,
+  "na_counts":{
+    "person_id":0,
+    "demo_gender":0,
+    "demo_age":0,
+    "demo_occupation":0,
+    "demo_bmi_category":0,
+    "SLEEP_hours":0,
+    "SLEEP_quality":0,
+    "SLEEP_disorder":219,
+    "ACTIVITY_level":0,
+    "ACTIVITY_steps":0,
+    "STRESS_level":0,
+    "HR_bpm":0,
+    "bp_systolic":0,
+    "bp_diastolic":0
+  },
+  "duplicates_in_person_id":0
+}
