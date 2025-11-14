@@ -11,7 +11,6 @@ import stepRouter from "./routes/stepRoutes.js";
 import heartRateRouter from "./routes/heartRateRoutes.js";
 import sleepSessionRouter  from "./routes/sleepSessionRoutes.js";
 
-const cors = require('cors');
 const app = express();
 const port = process.env.PORT || 4000
 connectDB();
