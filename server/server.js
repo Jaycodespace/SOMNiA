@@ -51,9 +51,6 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// Handle preflight requests globally
-app.options('*', cors());
-
 //API Endpoints
 app.use('/api/auth', authRouter);
 app.use('/api/user', userRouter);
