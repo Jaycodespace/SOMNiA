@@ -11,6 +11,7 @@ import stepRouter from "./routes/stepRoutes.js";
 import heartRateRouter from "./routes/heartRateRoutes.js";
 import sleepSessionRouter  from "./routes/sleepSessionRoutes.js";
 
+const cors = require('cors');
 const app = express();
 const port = process.env.PORT || 4000
 connectDB();
@@ -29,9 +30,30 @@ const allowedOrigins = [
   ];
   
 
+app.use(cors({
+    origin: function (origin, callback) {
+        // Allow requests with no origin (like mobile apps, Postman, etc.)
+        if (!origin) return callback(null, true);
+        
+        if (allowedOrigins.indexOf(origin) !== -1) {
+            callback(null, true);
+        } else {
+            console.log('Blocked by CORS:', origin);
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Cookie', 'Set-Cookie']
+}));
+
+// Other middleware
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-app.use(cors({origin: allowedOrigins, credentials: true}));
+
+// Handle preflight requests globally
+app.options('*', cors());
 
 //API Endpoints
 app.use('/api/auth', authRouter);
@@ -41,3 +63,4 @@ app.use('/api/step',stepRouter);
 app.use('/api/heartRate',heartRateRouter);
 app.use('/api/sleepSession', sleepSessionRouter);
 app.listen(port, ()=> console.log(`Server started on PORT:${port}`));
+
