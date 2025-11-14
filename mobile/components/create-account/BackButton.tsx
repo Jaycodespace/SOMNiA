@@ -1,22 +1,15 @@
+import { useThemeStore } from "@/store/themeStore";
 import React from "react";
-import { Pressable, StyleSheet, Text } from "react-native";
+import { Pressable, Text } from "react-native";
 
-const BackButton = ({ onPress }: { onPress: () => void }) => (
-  <Pressable onPress={onPress} style={styles.button}>
-    <Text style={styles.text}>Back to Sign In</Text>
-  </Pressable>
-);
+export default function BackButton({ onPress }: { onPress: () => void }) {
+  const { colors } = useThemeStore();
 
-export default BackButton;
-
-const styles = StyleSheet.create({
-  button: {
-    marginTop: 20,
-    padding: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    alignItems: "center",
-  },
-  text: { color: "#000" },
-});
+  return (
+    <Pressable onPress={onPress} style={{ marginTop: 16, alignSelf: "center" }}>
+      <Text style={{ color: colors.primary }}>
+        Back to Sign In
+      </Text>
+    </Pressable>
+  );
+}

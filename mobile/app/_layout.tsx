@@ -1,5 +1,7 @@
+import ThemeProvider from "@/components/theme/ThemeProvider";
 import { useAppStore } from "@/store/appStore";
 import { useAuthSession, useStoreAuth } from "@/store/authStore";
+import { useThemeStore } from "@/store/themeStore";
 import { Stack } from "expo-router";
 import { useEffect } from "react";
 import { ActivityIndicator, View } from "react-native";
@@ -8,48 +10,63 @@ import HealthGuard from "../components/main/HealthGuard";
 export default function RootLayout() {
   const { isLoggedIn, shouldCreateAccount, forgotPassword, restoreSession, isRestoring } = useStoreAuth();
   const { hasSeenWelcome, loadAppState } = useAppStore();
+  const { loadSavedTheme, colors } = useThemeStore();
 
   useAuthSession();
 
   useEffect(() => {
     restoreSession();
     loadAppState();
-  }, [restoreSession, loadAppState]);
+    loadSavedTheme();
+  }, [restoreSession, loadAppState, loadSavedTheme]);
 
+  // 🕓 Theme-aware loading screen
   if (isRestoring || hasSeenWelcome === null) {
     return (
-      <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-        <ActivityIndicator size="large" />
-      </View>
+      <ThemeProvider>
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: colors.background,
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      </ThemeProvider>
     );
   }
 
   return (
-    <HealthGuard>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Protected guard={!isLoggedIn}>
-          <Stack.Protected guard={shouldCreateAccount}>
-            <Stack.Screen name="create-account" />
+    <ThemeProvider>
+      <HealthGuard>
+        <Stack screenOptions={{ headerShown: false }}>
+          {/* AUTH FLOW */}
+          <Stack.Protected guard={!isLoggedIn}>
+            <Stack.Protected guard={shouldCreateAccount}>
+              <Stack.Screen name="create-account" />
+            </Stack.Protected>
+
+            <Stack.Protected guard={forgotPassword}>
+              <Stack.Screen name="forgot-password" />
+            </Stack.Protected>
+
+            <Stack.Screen name="sign-in" />
           </Stack.Protected>
 
-          <Stack.Protected guard={forgotPassword}>
-            <Stack.Screen name="forgot-password" />
+          {/* APP FLOW */}
+          <Stack.Protected guard={isLoggedIn && !shouldCreateAccount && !forgotPassword}>
+            <Stack.Protected guard={!hasSeenWelcome}>
+              <Stack.Screen name="welcome" />
+            </Stack.Protected>
+
+            <Stack.Protected guard={hasSeenWelcome}>
+              <Stack.Screen name="(protected)" />
+            </Stack.Protected>
           </Stack.Protected>
-
-          <Stack.Screen name="sign-in" />
-        </Stack.Protected>
-
-        <Stack.Protected guard={isLoggedIn && !shouldCreateAccount && !forgotPassword}>
-          <Stack.Protected guard={!hasSeenWelcome}>
-            <Stack.Screen name="welcome" />
-          </Stack.Protected>
-
-          <Stack.Protected guard={hasSeenWelcome}>
-            <Stack.Screen name="(protected)" />
-          </Stack.Protected>
-        </Stack.Protected>
-
-      </Stack>
-    </HealthGuard>
+        </Stack>
+      </HealthGuard>
+    </ThemeProvider>
   );
 }

@@ -1,4 +1,5 @@
 import { useHealthStore } from "@/store/health/healthStore";
+import { useThemeStore } from "@/store/themeStore";
 import React, { useEffect } from "react";
 import {
   ActivityIndicator,
@@ -12,6 +13,7 @@ import {
 import { SdkAvailabilityStatus } from "react-native-health-connect";
 
 export default function HealthGuard({ children }: { children: React.ReactNode }) {
+  const { colors } = useThemeStore();
   const { sdkStatus, isChecking, checkHealthConnect } = useHealthStore();
 
   // 🧩 1️⃣ Check on mount
@@ -19,11 +21,10 @@ export default function HealthGuard({ children }: { children: React.ReactNode })
     checkHealthConnect();
   }, [checkHealthConnect]);
 
-  // 🔁 2️⃣ Re-check when app returns from background
+  // 🔁 2️⃣ Re-check on app resume
   useEffect(() => {
     const subscription = AppState.addEventListener("change", (state) => {
       if (state === "active") {
-        console.log("App resumed — re-checking Health Connect...");
         checkHealthConnect(true);
       }
     });
@@ -37,9 +38,9 @@ export default function HealthGuard({ children }: { children: React.ReactNode })
       <View
         style={{
           flex: 1,
+          backgroundColor: colors.background,
           justifyContent: "center",
           alignItems: "center",
-          backgroundColor: "#fff",
         }}
       >
         <Image
@@ -47,33 +48,37 @@ export default function HealthGuard({ children }: { children: React.ReactNode })
           style={{ width: 100, height: 100, marginBottom: 25 }}
           resizeMode="contain"
         />
-        <ActivityIndicator size="large" color="#007BFF" />
-        <Text style={{ marginTop: 10, color: "#444", fontSize: 16 }}>
+
+        <ActivityIndicator size="large" color={colors.primary} />
+
+        <Text style={{ marginTop: 10, color: colors.text, fontSize: 16 }}>
           Checking Health Connect...
         </Text>
       </View>
     );
   }
 
-  // ❌ Not available or needs update
+  // ❌ Not available UI – now themed
   if (
     sdkStatus === SdkAvailabilityStatus.SDK_UNAVAILABLE ||
     sdkStatus === SdkAvailabilityStatus.SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED
   ) {
     const openPlayStore = async () => {
-      const playStoreUrl =
+      const url =
         "https://play.google.com/store/apps/details?id=com.google.android.apps.healthdata";
-      const canOpen = await Linking.canOpenURL(playStoreUrl);
-      if (canOpen) Linking.openURL(playStoreUrl);
+
+      if (await Linking.canOpenURL(url)) {
+        Linking.openURL(url);
+      }
     };
 
     return (
       <View
         style={{
           flex: 1,
+          backgroundColor: colors.background,
           justifyContent: "center",
           alignItems: "center",
-          backgroundColor: "#fff",
           paddingHorizontal: 30,
         }}
       >
@@ -88,7 +93,7 @@ export default function HealthGuard({ children }: { children: React.ReactNode })
             fontSize: 22,
             fontWeight: "700",
             marginBottom: 8,
-            color: "#111",
+            color: colors.text,
           }}
         >
           Health Connect Required
@@ -96,7 +101,7 @@ export default function HealthGuard({ children }: { children: React.ReactNode })
 
         <Text
           style={{
-            color: "#666",
+            color: colors.subtleText,
             textAlign: "center",
             fontSize: 15,
             marginBottom: 25,
@@ -107,16 +112,14 @@ export default function HealthGuard({ children }: { children: React.ReactNode })
           Store.
         </Text>
 
+        {/* Primary button */}
         <Pressable
           onPress={openPlayStore}
           style={{
-            backgroundColor: "#007BFF",
+            backgroundColor: colors.primary,
             paddingVertical: 14,
             paddingHorizontal: 40,
             borderRadius: 10,
-            shadowColor: "#007BFF",
-            shadowOpacity: 0.3,
-            shadowRadius: 5,
             elevation: 3,
           }}
         >
@@ -125,12 +128,9 @@ export default function HealthGuard({ children }: { children: React.ReactNode })
           </Text>
         </Pressable>
 
-        {/* 🔁 Retry button manually rechecks */}
-        <Pressable
-          onPress={() => checkHealthConnect(true)}
-          style={{ marginTop: 20 }}
-        >
-          <Text style={{ color: "#007BFF", fontWeight: "500", fontSize: 15 }}>
+        {/* Retry */}
+        <Pressable onPress={() => checkHealthConnect(true)} style={{ marginTop: 20 }}>
+          <Text style={{ color: colors.primary, fontWeight: "500", fontSize: 15 }}>
             Retry
           </Text>
         </Pressable>
@@ -138,6 +138,6 @@ export default function HealthGuard({ children }: { children: React.ReactNode })
     );
   }
 
-  // ✅ Health Connect OK → show app
+  // ✅ HC available
   return <>{children}</>;
 }

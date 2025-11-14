@@ -1,28 +1,42 @@
 import { useStoreAuth } from "@/store/authStore";
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
+
 import {
+  ImageBackground,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
+
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import BackButton from "../components/create-account/BackButton";
-import InputField from "../components/create-account/InputField";
-import PasswordStrengthBar from "../components/create-account/PasswordStrengthBar";
-import SubmitButton from "../components/create-account/SubmitButton";
-import useCheckEmail from "../hooks/create-account/useCheckEmail";
-import useCheckUsername from "../hooks/create-account/useCheckUsername";
-import usePasswordStrength from "../hooks/create-account/usePasswordStrength";
-import styles from "../styles/CreateAccount.styles";
+import BackButton from "@/components/create-account/BackButton";
+import InputField from "@/components/create-account/InputField";
+import PasswordStrengthBar from "@/components/create-account/PasswordStrengthBar";
+import SubmitButton from "@/components/create-account/SubmitButton";
+import useCheckEmail from "@/hooks/create-account/useCheckEmail";
+import useCheckUsername from "@/hooks/create-account/useCheckUsername";
+import usePasswordStrength from "@/hooks/create-account/usePasswordStrength";
+
+import ThemeToggle from "@/components/theme/ThemeToggle";
+import { useThemeStore } from "@/store/themeStore";
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
+// Background images for light/dark theme
+const lightBg = require("@/assets/images/noon_sky.png");
+const darkBg = require("@/assets/images/night_sky.png");
+const lightLogo = require("@/assets/images/somnia_logo_light.png");
+const darkLogo = require("@/assets/images/somnia_logo_dark.png");
+
 export default function CreateAccountScreen() {
+  const { colors, theme } = useThemeStore();
+  const bgImage = theme === "light" ? lightBg : darkBg;
+  const logoImage = theme === "light" ? lightLogo : darkLogo;
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -56,32 +70,71 @@ export default function CreateAccountScreen() {
 
       const data = await res.json();
       if (data.success) {
-        alert("✅ Account created! Please sign in.");
+        alert("Account created! Please sign in.");
         backToSignIn();
       } else alert(data.message || "Registration failed.");
     } catch (err) {
-      console.error("Register error:", err);
-      alert("Something went wrong. Try again.");
+      alert("Something went wrong.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+      <ImageBackground
+        source={bgImage}
+        style={{ flex: 1 }}
+        resizeMode="cover"
+      >
+      <ImageBackground
+        source={logoImage}
+        style={{ flex: 1 }}
+        resizeMode="cover"
+        imageStyle={{ opacity: 0.4 }}
+      >
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={Platform.OS === "ios" ? 80 : 0}
       >
+        {/* Theme Toggle */}
+        <ThemeToggle />
         <ScrollView
-          contentContainerStyle={styles.scrollContainer}
+          contentContainerStyle={{
+            flexGrow: 1,
+            justifyContent: "center",
+          }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={styles.container}>
-            <Text style={styles.title}>Create Account</Text>
-
+          <View
+            style={{
+              backgroundColor: colors.card,
+              marginHorizontal: '5%',
+              padding: 20,
+              borderRadius: 16,
+              borderWidth: 1,
+              borderColor: colors.border,
+              shadowColor: "#000",
+              shadowOpacity: 0.1,
+              shadowRadius: 6,
+              elevation: 3,      // Android shadow
+              marginBottom: 20,
+            }}
+          >
+            {/* Title */}
+            <Text
+              style={{
+                fontSize: 30,
+                fontWeight: "600",
+                marginBottom: 20,
+                textAlign: "center",
+                color: colors.text,
+              }}
+            >
+              Create Account
+            </Text>
             {/* Username */}
             <InputField
               label="Username"
@@ -117,7 +170,7 @@ export default function CreateAccountScreen() {
               keyboardType="email-address"
             />
 
-            {/* Password with toggle */}
+            {/* Password */}
             <View style={{ position: "relative" }}>
               <InputField
                 label="Password"
@@ -137,14 +190,14 @@ export default function CreateAccountScreen() {
                 <Ionicons
                   name={showPassword ? "eye-off" : "eye"}
                   size={20}
-                  color="#666"
+                  color={colors.subtleText}
                 />
               </TouchableOpacity>
             </View>
 
             <PasswordStrengthBar passwordStrength={passwordStrength} />
 
-            {/* Confirm Password with toggle */}
+            {/* Confirm Password */}
             <View style={{ position: "relative" }}>
               <InputField
                 label="Confirm Password"
@@ -169,7 +222,7 @@ export default function CreateAccountScreen() {
                 <Ionicons
                   name={showConfirmPassword ? "eye-off" : "eye"}
                   size={20}
-                  color="#666"
+                  color={colors.subtleText}
                 />
               </TouchableOpacity>
             </View>
@@ -184,6 +237,8 @@ export default function CreateAccountScreen() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+      </ImageBackground>
+      </ImageBackground>
     </SafeAreaView>
   );
 }

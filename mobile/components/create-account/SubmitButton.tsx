@@ -1,3 +1,4 @@
+import { useThemeStore } from "@/store/themeStore";
 import React from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text } from "react-native";
 
@@ -5,10 +6,19 @@ type Props = {
   onPress: () => void;
   loading?: boolean;
   enabled?: boolean;
+  label?: string;
 };
 
-const SubmitButton: React.FC<Props> = ({ onPress, loading, enabled }) => {
-  const backgroundColor = enabled ? "#007BFF" : "#ccc";
+const SubmitButton: React.FC<Props> = ({
+  onPress,
+  loading,
+  enabled = true,
+  label = "Create Account",
+}) => {
+  const { colors } = useThemeStore();
+
+  const backgroundColor = enabled ? colors.primary : colors.border;
+  const textColor = colors.text; // dynamic from theme
 
   return (
     <Pressable
@@ -17,9 +27,11 @@ const SubmitButton: React.FC<Props> = ({ onPress, loading, enabled }) => {
       style={[styles.button, { backgroundColor }]}
     >
       {loading ? (
-        <ActivityIndicator color="#fff" />
+        <ActivityIndicator color={textColor} />
       ) : (
-        <Text style={styles.text}>Create Account</Text>
+        <Text style={[styles.text, { color: textColor }]}>
+          {label}
+        </Text>
       )}
     </Pressable>
   );
@@ -29,10 +41,13 @@ export default SubmitButton;
 
 const styles = StyleSheet.create({
   button: {
-    padding: 12,
-    borderRadius: 8,
+    padding: 14,
+    borderRadius: 10,
     alignItems: "center",
-    marginTop: 15,
+    marginTop: 10,
   },
-  text: { color: "#fff", fontWeight: "600", fontSize: 16 },
+  text: {
+    fontWeight: "600",
+    fontSize: 16,
+  },
 });
