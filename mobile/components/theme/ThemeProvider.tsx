@@ -18,7 +18,7 @@ export default function ThemeProvider({ children }: { children: React.ReactNode 
   // Smooth transition every time theme changes
   React.useEffect(() => {
     progress.value = withTiming(theme === "dark" ? 1 : 0, { duration: 350 });
-  }, [theme]);
+  }, [theme, progress]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     backgroundColor: interpolateColor(

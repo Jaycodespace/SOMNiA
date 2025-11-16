@@ -11,3 +11,23 @@ export const loginUser = async (usernameEmail: string, password: string) => {
 
   return result;
 };
+
+export const requestPasswordReset = async (email: string) => {
+  return await postData("/email/forgot-password", { email });
+};
+
+export const verifyResetCode = async (email: string, code: string) => {
+  return await postData("/email/verify-reset-code", { email, code });
+};
+
+export const resendResetCode = async (email: string) => {
+  return await postData("/email/forgot-password", { email });
+};
+
+export const resetPassword = async (email: string, code: string, newPassword: string) => {
+  return await postData("/api/auth/reset-password", {
+    email,
+    code,
+    newPassword,
+  });
+};

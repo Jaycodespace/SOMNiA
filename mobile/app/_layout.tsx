@@ -49,8 +49,11 @@ export default function RootLayout() {
             </Stack.Protected>
 
             <Stack.Protected guard={forgotPassword}>
-              <Stack.Screen name="forgot-password" />
+              <Stack.Screen name="forgot-password/index" />
+              <Stack.Screen name="forgot-password/enter-code" />
+              <Stack.Screen name="forgot-password/new-password" />
             </Stack.Protected>
+
 
             <Stack.Screen name="sign-in" />
           </Stack.Protected>
