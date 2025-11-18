@@ -1,92 +1,56 @@
-import { Feather } from "@expo/vector-icons";
-import type { BottomTabNavigationOptions } from "@react-navigation/bottom-tabs";
-import { getFocusedRouteNameFromRoute, RouteProp } from "@react-navigation/native";
+import { useThemeStore } from "@/store/themeStore";
+import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-
-const getTabVisibilityOptions = (
-  route: RouteProp<Record<string, object | undefined>, string>,
-  hiddenScreens: string[],
-  bottomInset: number // 👈 add inset as a parameter
-): BottomTabNavigationOptions => {
-  const routeName = getFocusedRouteNameFromRoute(route) ?? "";
-  const isHidden = hiddenScreens.includes(routeName);
-
-  return {
-    tabBarStyle: {
-      display: isHidden ? "none" : "flex",
-      position: "absolute",
-      bottom: bottomInset + 10, // 👈 use the inset here
-      left: 20,
-      right: 20,
-      elevation: 5,
-      backgroundColor: "#ffffff",
-      borderRadius: 20,
-      height: 70,
-      shadowColor: "#000",
-      shadowOpacity: 0.1,
-      shadowOffset: { width: 0, height: 3 },
-      shadowRadius: 8,
-      paddingBottom: 10,
-      paddingTop: 10,
-    },
-  };
-};
+import React from "react";
 
 export default function ProtectedLayout() {
-  const insets = useSafeAreaInsets(); // ✅ safe to use here
+  const { colors, theme } = useThemeStore();
 
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarShowLabel: false,
-        tabBarActiveTintColor: "#007bff",
-        tabBarInactiveTintColor: "#999",
+
+        tabBarActiveTintColor: colors.tabBarActiveTint,
+        tabBarInactiveTintColor: colors.tabBarInactiveTint,
+        tabBarStyle: {
+          backgroundColor: colors.tabBarBackground,
+          borderTopColor: theme === "dark" 
+            ? colors.borderStrongDark 
+            : colors.borderStrong,
+          paddingBottom: 8,
+          borderTopWidth: 1.5,
+
+          elevation: 20,
+          shadowColor: "#000",
+          shadowOpacity: 0.15,
+          shadowRadius: 12,
+          shadowOffset: { width: 0, height: -4 },
+        },
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: "600",
+        },
       }}
     >
-      {/* 🏠 Home Tab */}
       <Tabs.Screen
         name="index"
-        options={({ route }) => ({
-          ...getTabVisibilityOptions(route, [
-            "show-exercise",
-            "show-heart-rate",
-            "show-sleep",
-            "show-steps",
-          ], insets.bottom),
-          title: "Home",
-          tabBarShowLabel: true,
-          tabBarLabelStyle: { fontSize: 12, marginBottom: 4 },
-          tabBarIcon: ({ color, focused }) => (
-            <Feather
-              name="home"
-              size={focused ? 28 : 24}
-              color={color}
-            />
+        options={{
+          tabBarLabel: "Home",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="home" size={size} color={color} />
           ),
-        })}
+        }}
       />
 
-      {/* 👤 Profile/Settings Tab */}
       <Tabs.Screen
         name="settings"
-        options={({ route }) => ({
-          ...getTabVisibilityOptions(route, [
-            "about-us",
-            "setup-health-perm",
-          ], insets.bottom),
-          title: "Profile",
-          tabBarShowLabel: true,
-          tabBarLabelStyle: { fontSize: 12, marginBottom: 4 },
-          tabBarIcon: ({ color, focused }) => (
-            <Feather
-              name="user"
-              size={focused ? 28 : 24}
-              color={color}
-            />
+        options={{
+          tabBarLabel: "Settings",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="settings" size={size} color={color} />
           ),
-        })}
+        }}
       />
     </Tabs>
   );

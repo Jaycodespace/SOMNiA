@@ -5,6 +5,7 @@ export default function WelcomeLayout() {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="index" />
       <Stack.Screen name="setup-health-perm" />
+      <Stack.Screen name="about-health-perms" />
     </Stack>
   );
 }

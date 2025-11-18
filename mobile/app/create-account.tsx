@@ -1,9 +1,8 @@
+import BackgroundWrapper from "@/components/theme/BackgroundWrapper";
 import { useStoreAuth } from "@/store/authStore";
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
-
 import {
-  ImageBackground,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -11,7 +10,6 @@ import {
   TouchableOpacity,
   View
 } from "react-native";
-
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import BackButton from "@/components/create-account/BackButton";
@@ -27,16 +25,9 @@ import { useThemeStore } from "@/store/themeStore";
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
-// Background images for light/dark theme
-const lightBg = require("@/assets/images/noon_sky.png");
-const darkBg = require("@/assets/images/night_sky.png");
-const lightLogo = require("@/assets/images/somnia_logo_light.png");
-const darkLogo = require("@/assets/images/somnia_logo_dark.png");
-
 export default function CreateAccountScreen() {
-  const { colors, theme } = useThemeStore();
-  const bgImage = theme === "light" ? lightBg : darkBg;
-  const logoImage = theme === "light" ? lightLogo : darkLogo;
+  const { colors } = useThemeStore();
+
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -82,163 +73,120 @@ export default function CreateAccountScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
-      <ImageBackground
-        source={bgImage}
-        style={{ flex: 1 }}
-        resizeMode="cover"
-      >
-      <ImageBackground
-        source={logoImage}
-        style={{ flex: 1 }}
-        resizeMode="cover"
-        imageStyle={{ opacity: 0.4 }}
-      >
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 80 : 0}
-      >
-        {/* Theme Toggle */}
-        <ThemeToggle />
-        <ScrollView
-          contentContainerStyle={{
-            flexGrow: 1,
-            justifyContent: "center",
-          }}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
+      <BackgroundWrapper>
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 80 : 0}
         >
-          <View
-            style={{
-              backgroundColor: colors.card,
-              marginHorizontal: '5%',
-              padding: 20,
-              borderRadius: 16,
-              borderWidth: 1,
-              borderColor: colors.border,
-              shadowColor: "#000",
-              shadowOpacity: 0.1,
-              shadowRadius: 6,
-              elevation: 3,      // Android shadow
-              marginBottom: 20,
-            }}
+          <ThemeToggle />
+
+          <ScrollView
+            contentContainerStyle={{ flexGrow: 1, justifyContent: "center", paddingHorizontal: 28 }}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
           >
-            {/* Title */}
-            <Text
+            <View
               style={{
-                fontSize: 30,
-                fontWeight: "600",
-                marginBottom: 20,
-                textAlign: "center",
-                color: colors.text,
+                backgroundColor: colors.card + "DD", // 87% opacity (glass look)
+                padding: 26,
+                borderRadius: 20,
+                borderWidth: 1,
+                borderColor: colors.border,
+                shadowColor: "#000",
+                shadowOpacity: 0.1,
+                shadowRadius: 12,
+                elevation: 5,
+                marginBottom: 24,
               }}
             >
-              Create Account
-            </Text>
-            {/* Username */}
-            <InputField
-              label="Username"
-              value={username}
-              onChangeText={setUsername}
-              status={usernameStatus}
-              hint={
-                username.length > 0 && username.length < 3
-                  ? "⚠️ Must be at least 3 characters"
-                  : usernameStatus === "taken"
-                  ? "❌ Username already taken"
-                  : usernameStatus === "available"
-                  ? "✅ Username available"
-                  : undefined
-              }
-            />
+              <View style={{ alignItems: "center", marginBottom: 24 }}>
+                <Text style={{ marginTop: 12, fontSize: 22, fontWeight: "700", color: colors.text }}>
+                  Create Account
+                </Text>
+              </View>
 
-            {/* Email */}
-            <InputField
-              label="Email"
-              value={email}
-              onChangeText={setEmail}
-              status={emailStatus}
-              hint={
-                emailStatus === "invalid"
-                  ? "❌ Invalid email format"
-                  : emailStatus === "taken"
-                  ? "❌ Email already used"
-                  : emailStatus === "available"
-                  ? "✅ Email available"
-                  : undefined
-              }
-              keyboardType="email-address"
-            />
-
-            {/* Password */}
-            <View style={{ position: "relative" }}>
+              {/* Username */}
               <InputField
-                label="Password"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!showPassword}
-              />
-              <TouchableOpacity
-                onPress={() => setShowPassword(!showPassword)}
-                style={{
-                  position: "absolute",
-                  right: 10,
-                  top: 38,
-                  padding: 5,
-                }}
-              >
-                <Ionicons
-                  name={showPassword ? "eye-off" : "eye"}
-                  size={20}
-                  color={colors.subtleText}
-                />
-              </TouchableOpacity>
-            </View>
-
-            <PasswordStrengthBar passwordStrength={passwordStrength} />
-
-            {/* Confirm Password */}
-            <View style={{ position: "relative" }}>
-              <InputField
-                label="Confirm Password"
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-                secureTextEntry={!showConfirmPassword}
+                label="Username"
+                value={username}
+                onChangeText={setUsername}
+                status={usernameStatus}
                 hint={
-                  confirmPassword.length > 0 && password !== confirmPassword
-                    ? "❌ Passwords do not match"
+                  username.length > 0 && username.length < 3
+                    ? "⚠️ Must be at least 3 characters"
+                    : usernameStatus === "taken"
+                    ? "❌ Username already taken"
+                    : usernameStatus === "available"
+                    ? "✅ Username available"
                     : undefined
                 }
               />
-              <TouchableOpacity
-                onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-                style={{
-                  position: "absolute",
-                  right: 10,
-                  top: 38,
-                  padding: 5,
-                }}
-              >
-                <Ionicons
-                  name={showConfirmPassword ? "eye-off" : "eye"}
-                  size={20}
-                  color={colors.subtleText}
+
+              {/* Email */}
+              <InputField
+                label="Email"
+                value={email}
+                onChangeText={setEmail}
+                status={emailStatus}
+                keyboardType="email-address"
+                hint={
+                  emailStatus === "invalid"
+                    ? "❌ Invalid email format"
+                    : emailStatus === "taken"
+                    ? "❌ Email already used"
+                    : emailStatus === "available"
+                    ? "✅ Email available"
+                    : undefined
+                }
+              />
+
+              {/* Password */}
+              <View style={{ position: "relative" }}>
+                <InputField
+                  label="Password"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
                 />
-              </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => setShowPassword(!showPassword)}
+                  style={{ position: "absolute", right: 10, top: 38, padding: 5 }}
+                >
+                  <Ionicons name={showPassword ? "eye-off" : "eye"} size={20} color={colors.subtleText} />
+                </TouchableOpacity>
+              </View>
+
+              <PasswordStrengthBar passwordStrength={passwordStrength} />
+
+              {/* Confirm Password */}
+              <View style={{ position: "relative" }}>
+                <InputField
+                  label="Confirm Password"
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                  secureTextEntry={!showConfirmPassword}
+                  hint={
+                    confirmPassword.length > 0 && password !== confirmPassword
+                      ? "❌ Passwords do not match"
+                      : undefined
+                  }
+                />
+                <TouchableOpacity
+                  onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                  style={{ position: "absolute", right: 10, top: 38, padding: 5 }}
+                >
+                  <Ionicons name={showConfirmPassword ? "eye-off" : "eye"} size={20} color={colors.subtleText} />
+                </TouchableOpacity>
+              </View>
+
+              <SubmitButton onPress={handleCreateAccount} loading={loading} enabled={canSubmit} />
+
+              <BackButton onPress={backToSignIn} />
             </View>
-
-            <SubmitButton
-              onPress={handleCreateAccount}
-              loading={loading}
-              enabled={canSubmit}
-            />
-
-            <BackButton onPress={backToSignIn} />
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-      </ImageBackground>
-      </ImageBackground>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </BackgroundWrapper>
     </SafeAreaView>
   );
 }

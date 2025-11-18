@@ -1,52 +1,38 @@
+import SleepSummary from "@/components/home/SleepCard";
+import BackgroundWrapper from "@/components/theme/BackgroundWrapper";
 import React from "react";
-import { RefreshControl, ScrollView, StyleSheet, Text } from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-
-import ExerciseCard from "../../components/home/ExerciseCard";
-import HeartRateCard from "../../components/home/HeartRateCard";
-import SleepCard from "../../components/home/SleepCard";
-import StepsCard from "../../components/home/StepsCard";
-import SyncButton from "../../components/home/SyncButton";
+import { StyleSheet } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function HomeScreen() {
-  const [refreshing, setRefreshing] = React.useState(false);
-  const insets = useSafeAreaInsets();
-  const handleSync = () => {
-    setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 1500);
-  };
+
+  const sleepStart = new Date();
+  sleepStart.setHours(23, 30);
+
+  const sleepEnd = new Date();
+  sleepEnd.setHours(7, 45);
 
   return (
-    <SafeAreaView
-      style={[
-        styles.container,
-        { paddingBottom: insets.bottom + 25 },
-      ]}
-    >
-      <ScrollView
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={handleSync} />
-        }
-        contentContainerStyle={{ padding: 16 }}
-      >
-        <Text style={styles.header}>Your Health Summary</Text>
-
-        <SleepCard />
-        <ExerciseCard />
-        <HeartRateCard />
-        <StepsCard />
-        <SyncButton onSync={handleSync} />
-      </ScrollView>
-    </SafeAreaView>
+    <BackgroundWrapper showLogo={false}>
+      <SafeAreaView style={styles.container} edges={["top"]}>
+        <SleepSummary
+          title="Last Night's Sleep"
+          date={new Date()}
+          sleepStart={sleepStart}
+          sleepEnd={sleepEnd}
+          quality={0.82}
+          isNap={false}
+          qualityTextOverride="Very Good"
+          durationOverride={7.8}
+        />
+      </SafeAreaView>
+    </BackgroundWrapper>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f9fafb" },
-  header: {
-    fontSize: 22,
-    fontWeight: "700",
-    marginBottom: 16,
-    color: "#111",
+  container: {
+    flex: 1,
+    padding: 18,
   },
 });

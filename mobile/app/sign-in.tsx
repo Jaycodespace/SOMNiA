@@ -1,11 +1,13 @@
 import { loginUser } from "@/api/auth";
+import BackgroundWrapper from "@/components/theme/BackgroundWrapper";
+import ThemeToggle from "@/components/theme/ThemeToggle";
 import { useStoreAuth } from "@/store/authStore";
+import { useThemeStore } from "@/store/themeStore";
 import { Ionicons } from "@expo/vector-icons";
 import { Link, router } from "expo-router";
 import { useState } from "react";
 import {
   ActivityIndicator,
-  ImageBackground,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -16,20 +18,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import ThemeToggle from "@/components/theme/ThemeToggle";
-import { useThemeStore } from "@/store/themeStore";
-
-// Background images for light/dark theme
-const lightBg = require("@/assets/images/noon_sky.png");
-const darkBg = require("@/assets/images/night_sky.png");
-const lightLogo = require("@/assets/images/somnia_logo_light.png");
-const darkLogo = require("@/assets/images/somnia_logo_dark.png");
-
-
 export default function SignInScreen() {
-  const { colors, theme } = useThemeStore();
-  const bgImage = theme === "light" ? lightBg : darkBg;
-  const logoImage = theme === "light" ? lightLogo : darkLogo;
+  const { colors } = useThemeStore();
 
   const [usernameEmail, setUsernameEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -56,11 +46,11 @@ export default function SignInScreen() {
         return;
       }
 
-      if (response.status === 404) setErrorMsg("❌ User or email not found.");
-      else if (response.status === 401) setErrorMsg("🔒 Incorrect password.");
+      if (response.status === 404) setErrorMsg("User or email not found.");
+      else if (response.status === 401) setErrorMsg("Incorrect password.");
       else setErrorMsg(response.message || "Login failed.");
     } catch {
-      setErrorMsg("⚠️ Network error. Try again.");
+      setErrorMsg("Network error. Try again.");
     } finally {
       setLoading(false);
     }
@@ -68,61 +58,48 @@ export default function SignInScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
-      {/* 🌄 Background Image */}
-      <ImageBackground
-        source={bgImage}
-        style={{ flex: 1 }}
-        resizeMode="cover"
-      >
-        <ImageBackground
-        source={logoImage}
-        style={{ flex: 1 }}
-        resizeMode="cover"
-        imageStyle={{ opacity: 0.4 }}
-      >
+      <BackgroundWrapper>
         <KeyboardAvoidingView
           style={{ flex: 1 }}
           behavior={Platform.OS === "ios" ? "padding" : undefined}
         >
-          {/* Toggle Theme Button */}
           <ThemeToggle />
 
           <ScrollView
             contentContainerStyle={{
               flexGrow: 1,
               justifyContent: "center",
-              paddingHorizontal: 24,
+              paddingHorizontal: 28,
             }}
             keyboardShouldPersistTaps="handled"
           >
-            {/* Card Container */}
             <View
               style={{
-                backgroundColor: colors.card,
-                padding: 20,
-                borderRadius: 16,
+                backgroundColor: colors.card + "DD", // 87% opacity (glass look)
+                padding: 24,
+                borderRadius: 20,
                 borderWidth: 1,
                 borderColor: colors.border,
                 shadowColor: "#000",
-                shadowOpacity: 0.15,
-                shadowRadius: 10,
-                elevation: 4,
+                shadowOpacity: 0.9,
+                shadowRadius: 16,
+                elevation: 5,
               }}
             >
-              {/* Title */}
-              <Text
-                style={{
-                  fontSize: 28,
-                  fontWeight: "700",
-                  marginBottom: 20,
-                  textAlign: "center",
-                  color: colors.text,
-                }}
-              >
-                Sign In
-              </Text>
+              <View style={{ alignItems: "center", marginBottom: 24 }}>
+                <Text
+                  style={{
+                    marginTop: 12,
+                    fontSize: 22,
+                    fontWeight: "700",
+                    color: colors.text,
+                  }}
+                >
+                  Sign in
+                </Text>
+              </View>
 
-              {/* Username / Email */}
+              {/* Inputs */}
               <TextInput
                 value={usernameEmail}
                 onChangeText={(t) => {
@@ -135,24 +112,26 @@ export default function SignInScreen() {
                 style={{
                   borderColor: colors.border,
                   borderWidth: 1,
-                  padding: 12,
-                  borderRadius: 10,
+                  paddingVertical: 14,
+                  paddingHorizontal: 16,
+                  borderRadius: 14,
                   color: colors.text,
                   backgroundColor: colors.card,
-                  marginBottom: 12,
+                  marginBottom: 16,
+                  fontSize: 15,
                 }}
               />
 
-              {/* Password */}
               <View
                 style={{
                   flexDirection: "row",
                   alignItems: "center",
                   borderColor: colors.border,
                   borderWidth: 1,
-                  borderRadius: 10,
+                  borderRadius: 14,
                   backgroundColor: colors.card,
-                  marginBottom: errorMsg ? 6 : 16,
+                  marginBottom: errorMsg ? 8 : 20,
+                  paddingRight: 12,
                 }}
               >
                 <TextInput
@@ -166,15 +145,14 @@ export default function SignInScreen() {
                   secureTextEntry={!showPassword}
                   style={{
                     flex: 1,
-                    padding: 12,
+                    paddingVertical: 14,
+                    paddingHorizontal: 16,
                     color: colors.text,
+                    fontSize: 15,
                   }}
                 />
 
-                <Pressable
-                  onPress={() => setShowPassword((prev) => !prev)}
-                  style={{ paddingHorizontal: 12 }}
-                >
+                <Pressable onPress={() => setShowPassword((p) => !p)}>
                   <Ionicons
                     name={showPassword ? "eye-off" : "eye"}
                     size={22}
@@ -183,14 +161,9 @@ export default function SignInScreen() {
                 </Pressable>
               </View>
 
-              {/* Error */}
               {errorMsg && (
                 <Text
-                  style={{
-                    color: "red",
-                    marginBottom: 10,
-                    textAlign: "center",
-                  }}
+                  style={{ color: "red", marginBottom: 14, textAlign: "center" }}
                 >
                   {errorMsg}
                 </Text>
@@ -202,22 +175,27 @@ export default function SignInScreen() {
                 disabled={loading || !canSubmit}
                 style={{
                   backgroundColor: canSubmit ? colors.primary : colors.border,
-                  padding: 14,
-                  borderRadius: 10,
+                  paddingVertical: 16,
+                  borderRadius: 14,
                   alignItems: "center",
                 }}
               >
                 {loading ? (
                   <ActivityIndicator color="#fff" />
                 ) : (
-                  <Text style={{ color: colors.text, fontWeight: "600", fontSize: 16, }}>
+                  <Text
+                    style={{
+                      color: colors.text,
+                      fontWeight: "700",
+                      fontSize: 16,
+                    }}
+                  >
                     Sign In
                   </Text>
                 )}
               </Pressable>
 
-              {/* Links */}
-              <View style={{ marginTop: 22, alignItems: "center" }}>
+              <View style={{ marginTop: 28, alignItems: "center" }}>
                 <Link href="/forgot-password" onPress={goToForgotPassword} push>
                   <Text style={{ color: colors.primary, marginBottom: 10 }}>
                     Forgot Password?
@@ -226,15 +204,14 @@ export default function SignInScreen() {
 
                 <Link href="/create-account" onPress={goToCreateAccount} push>
                   <Text style={{ color: colors.primary }}>
-                    Don’t have an account? Create one
+                    Dont have an account? Create one
                   </Text>
                 </Link>
               </View>
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
-      </ImageBackground>
-      </ImageBackground>
+      </BackgroundWrapper>
     </SafeAreaView>
   );
 }

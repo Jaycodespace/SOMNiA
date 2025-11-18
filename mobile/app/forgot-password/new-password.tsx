@@ -1,33 +1,38 @@
 import { resetPassword } from "@/api/auth";
+import BackgroundWrapper from "@/components/theme/BackgroundWrapper";
 import ThemeToggle from "@/components/theme/ThemeToggle";
 import { useThemeStore } from "@/store/themeStore";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   ActivityIndicator,
-  ImageBackground,
-  KeyboardAvoidingView, Platform,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
-  Text, TextInput,
-  View
+  Text,
+  TextInput,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const lightBg = require("@/assets/images/noon_sky.png");
-const darkBg = require("@/assets/images/night_sky.png");
-
 export default function NewPasswordScreen() {
   const { email, code } = useLocalSearchParams<{ email: string; code: string }>();
-  const { colors, theme } = useThemeStore();
-  const bgImage = theme === "light" ? lightBg : darkBg;
+  const { colors } = useThemeStore();
 
   const [pw, setPw] = useState("");
   const [pw2, setPw2] = useState("");
   const [show, setShow] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // Password strength calculation
+  const strength = useMemo(() => {
+    if (pw.length < 6) return "weak";
+    if (pw.match(/[A-Z]/) && pw.match(/[0-9]/)) return "strong";
+    return "medium";
+  }, [pw]);
 
   const canSubmit = pw.trim().length >= 6 && pw === pw2;
 
@@ -55,10 +60,16 @@ export default function NewPasswordScreen() {
     }
   };
 
+  const strengthColor =
+    strength === "weak"
+      ? "red"
+      : strength === "medium"
+      ? "#e0a200"
+      : "#2ecc71";
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
-      <ImageBackground source={bgImage} style={{ flex: 1 }}>
-
+      <BackgroundWrapper showLogo={false}>
         <KeyboardAvoidingView
           style={{ flex: 1 }}
           behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -70,14 +81,15 @@ export default function NewPasswordScreen() {
               flexGrow: 1,
               justifyContent: "center",
               paddingHorizontal: 24,
+              paddingVertical: 20,
             }}
             keyboardShouldPersistTaps="handled"
           >
             <View
               style={{
                 backgroundColor: colors.card,
-                padding: 20,
-                borderRadius: 16,
+                padding: 22,
+                borderRadius: 18,
                 borderWidth: 1,
                 borderColor: colors.border,
               }}
@@ -94,7 +106,7 @@ export default function NewPasswordScreen() {
                 Set New Password
               </Text>
 
-              {/* Password */}
+              {/* Password Input */}
               <View
                 style={{
                   flexDirection: "row",
@@ -103,52 +115,83 @@ export default function NewPasswordScreen() {
                   borderWidth: 1,
                   borderRadius: 10,
                   backgroundColor: colors.card,
-                  marginBottom: 12,
+                  marginBottom: 8,
                 }}
               >
                 <TextInput
                   value={pw}
-                  onChangeText={(t) => setPw(t)}
+                  onChangeText={setPw}
                   secureTextEntry={!show}
                   placeholder="New password"
                   placeholderTextColor={colors.subtleText}
-                  style={{ flex: 1, padding: 12, color: colors.text }}
+                  style={{
+                    flex: 1,
+                    padding: 14,
+                    fontSize: 16,
+                    color: colors.text,
+                  }}
                 />
                 <Pressable onPress={() => setShow((p) => !p)} style={{ padding: 12 }}>
-                  <Ionicons name={show ? "eye-off" : "eye"} size={22} color={colors.subtleText} />
+                  <Ionicons
+                    name={show ? "eye-off" : "eye"}
+                    size={22}
+                    color={colors.subtleText}
+                  />
                 </Pressable>
               </View>
 
-              {/* Confirm password */}
+              {/* Password Strength */}
+              {pw.length > 0 && (
+                <Text
+                  style={{
+                    marginBottom: 16,
+                    color: strengthColor,
+                    fontWeight: "600",
+                  }}
+                >
+                  Strength: {strength.toUpperCase()}
+                </Text>
+              )}
+
+              {/* Confirm Password */}
               <TextInput
                 value={pw2}
-                onChangeText={(t) => setPw2(t)}
+                onChangeText={setPw2}
                 secureTextEntry={!show}
-                placeholder="Confirm password"
+                placeholder="Confirm new password"
                 placeholderTextColor={colors.subtleText}
                 style={{
                   borderColor: colors.border,
                   borderWidth: 1,
                   borderRadius: 10,
-                  padding: 12,
+                  padding: 14,
+                  fontSize: 16,
                   color: colors.text,
-                  marginBottom: errorMsg ? 6 : 16,
                   backgroundColor: colors.card,
+                  marginBottom: errorMsg ? 8 : 18,
                 }}
               />
 
+              {/* Errors */}
+              {pw2.length > 0 && pw !== pw2 && (
+                <Text style={{ color: "red", marginBottom: 10 }}>
+                  Passwords do not match.
+                </Text>
+              )}
+
               {errorMsg && (
-                <Text style={{ color: "red", marginBottom: 10, textAlign: "center" }}>
+                <Text style={{ color: "red", marginBottom: 12, textAlign: "center" }}>
                   {errorMsg}
                 </Text>
               )}
 
+              {/* Submit Button */}
               <Pressable
                 onPress={handleSubmit}
                 disabled={!canSubmit || loading}
                 style={{
                   backgroundColor: canSubmit ? colors.primary : colors.border,
-                  padding: 14,
+                  padding: 15,
                   borderRadius: 10,
                   alignItems: "center",
                 }}
@@ -156,7 +199,7 @@ export default function NewPasswordScreen() {
                 {loading ? (
                   <ActivityIndicator color="#fff" />
                 ) : (
-                  <Text style={{ color: colors.text, fontWeight: "600", fontSize: 16 }}>
+                  <Text style={{ color: "#fff", fontWeight: "600", fontSize: 17 }}>
                     Save Password
                   </Text>
                 )}
@@ -164,8 +207,7 @@ export default function NewPasswordScreen() {
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
-
-      </ImageBackground>
+      </BackgroundWrapper>
     </SafeAreaView>
   );
 }

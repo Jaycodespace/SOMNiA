@@ -1,272 +1,214 @@
-import { useSleepStore } from "@/store/health/sleepStore";
-import { Feather } from "@expo/vector-icons";
-import React, { useEffect, useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  Linking,
-  Modal,
-  Pressable,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { useThemeStore } from "@/store/themeStore";
+import { LinearGradient } from "expo-linear-gradient";
+import React, { useMemo } from "react";
+import { StyleSheet, Text, View } from "react-native";
+import Animated, { useAnimatedProps } from "react-native-reanimated";
+import { Circle, Defs, FeDropShadow, Filter, LinearGradient as SVGGradient, Stop, Svg } from "react-native-svg";
 
-export default function SleepCard() {
-  const { hasSleepPermission, getSleepData, sleepData } = useSleepStore();
-  const [loading, setLoading] = useState(true);
-  const [hasPermission, setHasPermission] = useState(false);
-  const [showLegend, setShowLegend] = useState(false);
+const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
-  useEffect(() => {
-    const loadData = async () => {
-      const granted = await hasSleepPermission();
-      setHasPermission(granted);
+interface SleepCardProps {
+  title?: string;
+  date?: Date;
 
-      if (granted) {
-        await getSleepData();
-      } else {
-        Alert.alert(
-          "Permission Needed",
-          "Sleep permission is required to show your recent sleep data.",
-          [
-            {
-              text: "Open Health Connect",
-              onPress: () =>
-                Linking.openURL(
-                  "https://play.google.com/store/apps/details?id=com.google.android.apps.healthdata"
-                ),
-            },
-            { text: "Cancel", style: "cancel" },
-          ]
-        );
-      }
+  sleepStart: Date;
+  sleepEnd: Date;
 
-      setLoading(false);
-    };
+  quality?: number;
+  qualityTextOverride?: string;
+  durationOverride?: number;
+  isNap?: boolean;
+}
 
-    loadData();
-  }, [getSleepData, hasSleepPermission]);
+export default function SleepCard({
+  title,
+  date,
+  sleepStart,
+  sleepEnd,
+  quality = 0.75,
+  qualityTextOverride,
+  durationOverride,
+  isNap,
+}: SleepCardProps) {
+  const { colors } = useThemeStore();
 
-  const formatTime = (isoString?: string) => {
-    if (!isoString) return "--:--";
-    const d = new Date(isoString);
-    return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  const computedIsNap =
+    isNap ?? (sleepStart.getHours() > 6 && sleepStart.getHours() < 18);
+
+  const hours = useMemo(() => {
+    if (typeof durationOverride === "number") return durationOverride;
+    const diff = (sleepEnd.getTime() - sleepStart.getTime()) / 1000 / 60 / 60;
+    return Math.max(0, Number(diff.toFixed(1)));
+  }, [sleepStart, sleepEnd, durationOverride]);
+
+  const formattedDate = (date ?? sleepEnd).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+
+  const getQualityText = (q: number) => {
+    if (q >= 0.85) return "Excellent Quality";
+    if (q >= 0.7) return "Good Quality";
+    if (q >= 0.5) return "Okay Quality";
+    return "Poor Quality";
   };
 
-  if (loading) {
-    return (
-      <View style={[styles.card, { alignItems: "center" }]}>
-        <ActivityIndicator color="#007BFF" />
-        <Text style={{ marginTop: 8, color: "#777" }}>Loading sleep data...</Text>
-      </View>
-    );
-  }
+  const qualityText =
+    qualityTextOverride ?? getQualityText(quality);
 
-  if (!hasPermission) {
-    return (
-      <Pressable style={[styles.card, { alignItems: "center" }]}>
-        <Feather name="moon" size={22} color="#007BFF" />
-        <Text style={styles.cardTitle}>Sleep</Text>
-        <Text style={{ color: "#777", marginTop: 8 }}>
-          Requires Health Connect permission
-        </Text>
-      </Pressable>
-    );
-  }
+  const size = 280;
+  const strokeWidth = 22;
+  const padding = strokeWidth / 2 + 4;
+  const radius = (size - strokeWidth) / 2 - 4;
+  const viewSize = size + padding * 2;
 
-  const isNap = sleepData?.label === "Nap";
-  const iconName = isNap ? "sun" : "moon";
-  const iconColor = isNap ? "#FBBF24" : "#007BFF";
+  const circumference = 2 * Math.PI * radius;
 
-  const qualityColor =
-    sleepData?.qualityScore && sleepData.qualityScore >= 8
-      ? "#34D399" // good
-      : sleepData?.qualityScore && sleepData.qualityScore >= 5
-      ? "#FBBF24" // fair
-      : "#EF4444"; // poor
-
-  // Battery-style segmented bar
-  const segments = 8;
-  const filledSegments = Math.round(
-    (sleepData?.qualityScore ?? 0) / (10 / segments)
-  );
+  const animatedProps = useAnimatedProps(() => ({
+    strokeDashoffset: circumference * (1 - quality),
+  }));
 
   return (
-    <Pressable style={[styles.card]}>
-      {/* Header */}
-      <View style={styles.cardHeader}>
-        <Feather name={iconName} size={22} color={iconColor} />
-        <Text style={[styles.cardTitle, { color: iconColor }]}>
-          {sleepData?.label ?? "Sleep"}
+    <View style={[styles.wrapper, { backgroundColor: colors.cardDarker + "55" }]}>
+      <LinearGradient
+        colors={[colors.gradientStart + "55", colors.gradientEnd + "55"]}
+        style={styles.container}
+      >
+        {/* Title */}
+        <Text style={[styles.title, { color: colors.text }]}>
+          {title ?? (computedIsNap ? "Nap Summary" : "Last Night’s Sleep")}
         </Text>
 
-        {/* Info icon */}
-        <TouchableOpacity
-          style={styles.infoButton}
-          onPress={() => setShowLegend(true)}
-        >
-          <Feather name="info" size={30 } color="#6B7280" />
-        </TouchableOpacity>
-      </View>
+        {/* Date */}
+        <Text style={[styles.date, { color: colors.text + "CC" }]}>
+          {formattedDate}
+        </Text>
 
-      {/* Main info */}
-      <Text style={styles.mainValue}>{sleepData?.duration ?? "--"}</Text>
-      <Text style={styles.subText}>
-        {sleepData?.quality ?? "N/A"} ({formatTime(sleepData?.startTime)} -{" "}
-        {formatTime(sleepData?.endTime)})
-      </Text>
+        {/* Circular Graph */}
+        <View style={styles.graphContainer}>
+          <Svg width={viewSize} height={viewSize}>
+            <Defs>
+              <SVGGradient id="sleepGradient" x1="0" y1="0" x2="1" y2="1">
+                <Stop offset="0%" stopColor={colors.gradientStart} />
+                <Stop offset="100%" stopColor={colors.gradientEnd} />
+              </SVGGradient>
+            </Defs>
+            
+            <Defs>
+              <Filter id="shadow">
+                <FeDropShadow dx="2" dy="2" stdDeviation="3" floodColor="#000" floodOpacity="0.5" />
+              </Filter>
+            </Defs>
 
-      {/* Battery-style segmented bar */}
-      <View style={styles.barContainer}>
-        {[...Array(segments)].map((_, i) => (
-          <View
-            key={i}
-            style={[
-              styles.barSegment,
-              {
-                backgroundColor:
-                  i < filledSegments ? qualityColor : "#E5E7EB",
-              },
-            ]}
-          />
-        ))}
-      </View>
+            <Circle
+              cx={viewSize / 2}
+              cy={viewSize / 2}
+              r={radius}
+              stroke={colors.borderStrong}
+              strokeWidth={strokeWidth + 8}
+              fill="none"
+              strokeOpacity={0.35}
+            />
 
-      <Text style={[styles.sleepQuality, { color: qualityColor }]}>
-        {sleepData?.quality ?? "N/A"}
-      </Text>
+            <Circle
+              cx={viewSize / 2}
+              cy={viewSize / 2}
+              r={radius}
+              stroke={colors.subtleText + "33"}
+              strokeWidth={strokeWidth}
+              fill="none"
+            />
 
-      {/* Tooltip / Legend Modal */}
-      <Modal
-        visible={showLegend}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowLegend(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            <Text style={styles.legendTitle}>Sleep Quality Guide</Text>
-            <Text style={styles.legendText}>
-              <Text style={{ color: "#34D399", fontWeight: "600" }}>Green</Text>{" "}
-              – Good sleep (7–9h night sleep, 10–30m nap)
-            </Text>
-            <Text style={styles.legendText}>
-              <Text style={{ color: "#FBBF24", fontWeight: "600" }}>Yellow</Text>{" "}
-              – Fair sleep (5–7h night sleep, 30–60m nap)
-            </Text>
-            <Text style={styles.legendText}>
-              <Text style={{ color: "#EF4444", fontWeight: "600" }}>Red</Text>{" "}
-              – Poor sleep (&lt;5h night sleep or &gt;90m nap)
-            </Text>
-            <Text style={[styles.legendText, { marginTop: 8 }]}>
-              Night sleep between <Text style={{ fontWeight: "600" }}>10 PM – 12 AM</Text>{" "}
-              improves recovery quality.
-            </Text>
+            <AnimatedCircle
+              cx={viewSize / 2}
+              cy={viewSize / 2}
+              r={radius}
+              stroke="url(#sleepGradient)"
+              strokeWidth={strokeWidth}
+              fill="none"
+              strokeLinecap="butt"
+              strokeDasharray={circumference}
+              animatedProps={animatedProps}
+            />
+          </Svg>
 
-            <Pressable
-              style={styles.closeButton}
-              onPress={() => setShowLegend(false)}
-            >
-              <Text style={styles.closeText}>Close</Text>
-            </Pressable>
-          </View>
+          <Text style={[styles.qualityText, { color: colors.text }]}>
+            {qualityText}
+          </Text>
         </View>
-      </Modal>
-    </Pressable>
+
+        {/* Bottom Summary */}
+        <Text style={[styles.bottomLine, { color: colors.text + "DD" }]}>
+          {formatTime(sleepStart)} → {formatTime(sleepEnd)} • {hours} hrs
+        </Text>
+      </LinearGradient>
+    </View>
   );
 }
 
+function formatTime(date: Date) {
+  return date.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-    elevation: 2,
-    borderWidth: 1,
-    borderColor: "#007BFF",
+  wrapper: {
+    width: "100%",
+    borderRadius: 20,
+    overflow: "hidden",
+    borderWidth: 4,
+    borderColor: "rgba(255,255,255,0.25)",
   },
-  cardHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 8,
-    gap: 6,
-  },
-  cardTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    flex: 1,
-  },
-  infoButton: {
-    padding: 4,
-  },
-  mainValue: {
-    fontSize: 28,
-    fontWeight: "800",
-    color: "#007BFF",
-  },
-  subText: {
-    fontSize: 14,
-    color: "#777",
-    marginTop: 4,
-  },
-  barContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 12,
-  },
-  barSegment: {
-    flex: 1,
-    height: 8,
-    borderRadius: 2,
-    marginHorizontal: 1,
-  },
-  sleepQuality: {
-    textAlign: "right",
-    fontWeight: "600",
-    marginTop: 4,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.4)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  modalContainer: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
+  container: {
     padding: 20,
-    width: "85%",
-    maxWidth: 400,
+    alignItems: "center",
   },
-  legendTitle: {
-    fontSize: 18,
+
+  /* -------- Typography Improvements -------- */
+
+  title: {
+    fontSize: 24,
     fontWeight: "700",
+    marginBottom: 4,
+    letterSpacing: 0.5,
+    textShadowColor: "#00000033",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+
+  date: {
+    fontSize: 16,
+    letterSpacing: 0.3,
     marginBottom: 10,
-    color: "#111827",
+  },
+
+  qualityText: {
+    position: "absolute",
+    fontSize: 40,
+    fontWeight: "700",
+    letterSpacing: -0.5,
+    textShadowColor: "#00000088",
+    textShadowOffset: { width: 1, height: 3 },
+    textShadowRadius: 10,
+  },
+
+  bottomLine: {
+    fontSize: 16,
+    marginTop: 12,
+    fontWeight: "500",
+    letterSpacing: 0.2,
     textAlign: "center",
   },
-  legendText: {
-    fontSize: 14,
-    color: "#374151",
-    marginBottom: 4,
-    lineHeight: 20,
-  },
-  closeButton: {
-    marginTop: 14,
-    backgroundColor: "#007BFF",
-    borderRadius: 8,
-    paddingVertical: 8,
+
+  /* ------------ Layout ------------ */
+
+  graphContainer: {
+    justifyContent: "center",
     alignItems: "center",
-  },
-  closeText: {
-    color: "#fff",
-    fontWeight: "600",
+    marginTop: 10,
+    marginBottom: 6,
   },
 });

@@ -7,7 +7,7 @@ export default function SettingsLayout() {
       <Stack.Screen name="index" 
         options={{
           title: "Profile",
-          headerShown: true
+          headerShown: false
         }}/>
     </Stack>
   )

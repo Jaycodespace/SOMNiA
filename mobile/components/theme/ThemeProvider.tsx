@@ -3,10 +3,10 @@ import { useThemeStore } from "@/store/themeStore";
 import React from "react";
 import { StatusBar, StyleSheet } from "react-native";
 import Animated, {
-    interpolateColor,
-    useAnimatedStyle,
-    useSharedValue,
-    withTiming,
+  interpolateColor,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
 } from "react-native-reanimated";
 
 export default function ThemeProvider({ children }: { children: React.ReactNode }) {
@@ -66,6 +66,6 @@ function AnimatedStatusBar({ theme, progress }: any) {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   statusBar: {
-    height: 32,
+    height: 0,
   },
 });

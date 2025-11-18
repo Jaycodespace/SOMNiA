@@ -1,4 +1,7 @@
+import ThemeToggle from "@/components/theme/ThemeToggle";
 import { useStoreAuth } from "@/store/authStore";
+import { useThemeStore } from '@/store/themeStore';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useState } from "react";
@@ -6,11 +9,12 @@ import {
   ActivityIndicator,
   Alert,
   Button,
-  View,
+  StyleSheet,
+  View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
 export default function SettingsScreen() {
+  const { colors } = useThemeStore();
   const { logout } = useStoreAuth();
   const [loading, setLoading] = useState(false);
 
@@ -62,17 +66,39 @@ export default function SettingsScreen() {
   
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
-      <View style={{ padding: 20, gap: 16 }}>
-        {/* ✅ Sign Out Button */}
-        <Button
-          title={loading ? "Signing Out..." : "Sign Out"}
-          onPress={handleSignOut}
-          disabled={loading}
-        />
+    <LinearGradient
+      colors={[colors.gradientStart, colors.gradientEnd]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.gradient}
+    >
+      <SafeAreaView style={styles.container}>
+        <ThemeToggle />
+        <View style={{ padding: 20, gap: 16 }}>
+          {/* ✅ Sign Out Button */}
+          <Button
+            title={loading ? "Signing Out..." : "Sign Out"}
+            onPress={handleSignOut}
+            disabled={loading}
+          />
 
-        {loading && <ActivityIndicator style={{ marginTop: 10 }} />}
-      </View>
-    </SafeAreaView>
+          {loading && <ActivityIndicator style={{ marginTop: 10 }} />}
+        </View>
+      </SafeAreaView>
+    </LinearGradient>
   );
 }
+
+const styles = StyleSheet.create({
+  gradient: {
+    flex: 1,
+  },
+  container: {
+    flex: 1,
+    paddingHorizontal: 16,
+  },
+  text: {
+    fontSize: 22,
+    fontWeight: "600",
+  }
+});

@@ -1,27 +1,24 @@
 import { resendResetCode, verifyResetCode } from "@/api/auth";
+import OtpInput from "@/components/inputs/OtpInput";
+import BackgroundWrapper from "@/components/theme/BackgroundWrapper";
 import ThemeToggle from "@/components/theme/ThemeToggle";
 import { useThemeStore } from "@/store/themeStore";
 import { router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import {
   ActivityIndicator,
-  ImageBackground,
   KeyboardAvoidingView,
   Platform,
   Pressable,
   ScrollView,
-  Text, TextInput,
+  Text,
   View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const lightBg = require("@/assets/images/noon_sky.png");
-const darkBg = require("@/assets/images/night_sky.png");
-
 export default function EnterCodeScreen() {
   const { email } = useLocalSearchParams<{ email: string }>();
-  const { colors, theme } = useThemeStore();
-  const bgImage = theme === "light" ? lightBg : darkBg;
+  const { colors } = useThemeStore();
 
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
@@ -74,7 +71,7 @@ export default function EnterCodeScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
-      <ImageBackground source={bgImage} style={{ flex: 1 }}>
+      <BackgroundWrapper showLogo={false}>
 
         <KeyboardAvoidingView
           style={{ flex: 1 }}
@@ -92,18 +89,22 @@ export default function EnterCodeScreen() {
           >
             <View
               style={{
-                backgroundColor: colors.card,
-                padding: 20,
-                borderRadius: 16,
+                backgroundColor: colors.card + "DD",
+                padding: 28,
+                borderRadius: 22,
                 borderWidth: 1,
-                borderColor: colors.border,
+                borderColor: colors.border + "55",
+                shadowColor: "#000",
+                shadowOpacity: 0.1,
+                shadowRadius: 16,
+                elevation: 6,
               }}
             >
               <Text
                 style={{
-                  fontSize: 26,
+                  fontSize: 28,
                   fontWeight: "700",
-                  marginBottom: 20,
+                  marginBottom: 8,
                   textAlign: "center",
                   color: colors.text,
                 }}
@@ -111,60 +112,73 @@ export default function EnterCodeScreen() {
                 Enter Verification Code
               </Text>
 
-              <TextInput
-                value={code}
-                onChangeText={(t) => {
-                  setCode(t);
-                  setErrorMsg(null);
-                }}
-                placeholder="123456"
-                keyboardType="numeric"
-                maxLength={6}
-                placeholderTextColor={colors.subtleText}
+              <Text
                 style={{
-                  borderColor: colors.border,
-                  borderWidth: 1,
-                  padding: 12,
-                  borderRadius: 10,
-                  backgroundColor: colors.card,
-                  color: colors.text,
+                  color: colors.subtleText,
                   textAlign: "center",
-                  fontSize: 20,
-                  letterSpacing: 6,
-                  marginBottom: errorMsg ? 6 : 16,
+                  marginBottom: 24,
+                  fontSize: 15,
+                  lineHeight: 22,
                 }}
-              />
+              >
+                We sent a 6-digit code to{" "}
+                <Text style={{ color: colors.text, fontWeight: "600" }}>
+                  {email}
+                </Text>
+              </Text>
+
+              {/* OTP INPUT */}
+              <OtpInput code={code} setCode={setCode} />
 
               {errorMsg && (
-                <Text style={{ color: "red", marginBottom: 10, textAlign: "center" }}>
+                <Text
+                  style={{
+                    color: "#E03E3E",
+                    marginTop: 6,
+                    marginBottom: 16,
+                    fontSize: 13,
+                    textAlign: "left",
+                  }}
+                >
                   {errorMsg}
                 </Text>
               )}
 
+              {/* VERIFY BUTTON */}
               <Pressable
                 onPress={handleVerify}
                 disabled={loading || code.length < 6}
-                style={{
-                  backgroundColor: code.length === 6 ? colors.primary : colors.border,
-                  padding: 14,
-                  borderRadius: 10,
+                style={({ pressed }) => ({
+                  backgroundColor:
+                    code.length === 6 ? colors.primary : colors.border,
+                  paddingVertical: 15,
+                  borderRadius: 14,
                   alignItems: "center",
-                }}
+                  transform: [{ scale: pressed ? 0.97 : 1 }],
+                })}
               >
                 {loading ? (
-                  <ActivityIndicator color="#fff" />
+                  <ActivityIndicator color={colors.text} />
                 ) : (
-                  <Text style={{ color: colors.text, fontWeight: "600", fontSize: 16 }}>
+                  <Text
+                    style={{
+                      color: colors.text,
+                      fontWeight: "600",
+                      fontSize: 16,
+                    }}
+                  >
                     Verify Code
                   </Text>
                 )}
               </Pressable>
 
+              {/* RESEND */}
               <Pressable onPress={handleResend} style={{ marginTop: 20 }}>
                 <Text
                   style={{
                     color: colors.primary,
                     textAlign: "center",
+                    fontSize: 14,
                   }}
                 >
                   {resending ? "Resending..." : "Resend Code"}
@@ -174,7 +188,7 @@ export default function EnterCodeScreen() {
           </ScrollView>
         </KeyboardAvoidingView>
 
-      </ImageBackground>
+      </BackgroundWrapper>
     </SafeAreaView>
   );
 }

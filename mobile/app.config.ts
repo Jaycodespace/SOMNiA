@@ -3,7 +3,7 @@ import 'dotenv/config';
 
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
-  name: 'SOMNiA Mobile',
+  name: 'SOMNiA',
   slug: 'somnia',
   version: '1.0.0',
   orientation: 'portrait',
