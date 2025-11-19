@@ -1,123 +1,106 @@
-import {
-    getGrantedPermissions,
-    readRecords,
-    requestPermission,
-} from "react-native-health-connect";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
-import { SleepData } from "./types";
+import { createJSONStorage, persist } from "zustand/middleware";
 
-type SleepState = {
-  sleepData: SleepData | null;
-  hasSleepPermission: () => Promise<boolean>;
-  getSleepData: () => Promise<void>;
-};
+import {
+  getGrantedPermissions,
+  readRecords
+} from "react-native-health-connect";
 
-export const useSleepStore = create<SleepState>((set) => ({
-  sleepData: null,
+import { differenceInMinutes } from "date-fns";
 
-  hasSleepPermission: async () => {
-    try {
-      const granted = await getGrantedPermissions();
-      const hasPermission = granted.some(
-        (p) => p.recordType === "SleepSession" && p.accessType === "read"
-      );
+interface SleepSummary {
+  totalMinutes: number;
+  qualityScore: number;
+  lastUpdated: number | null;
+}
 
-      // If not granted, ask the user
-      if (!hasPermission) {
-        const result = await requestPermission([
-          { accessType: "read", recordType: "SleepSession" },
-        ]);
+interface SleepStore {
+  summary: SleepSummary;
+  loading: boolean;
+  hasPermission: boolean | null;
 
-        return result.length > 0; // true if permission was granted
-      }
+  checkPermissions: () => Promise<void>;
+  fetchTodaySleep: () => Promise<void>;
+}
 
-      return true;
-    } catch (error) {
-      console.error("Error checking sleep permission:", error);
-      return false;
-    }
-  },
+export const useSleepStore = create(
+  persist<SleepStore>(
+    (set, get) => ({
+      summary: {
+        totalMinutes: 0,
+        qualityScore: 0,
+        lastUpdated: null,
+      },
+      loading: false,
+      hasPermission: null,
 
-  getSleepData: async () => {
-    try {
-      const result = await readRecords("SleepSession", {
-        timeRangeFilter: {
-          operator: "between",
-          startTime: new Date(Date.now() - 48 * 3600000).toISOString(),
-          endTime: new Date().toISOString(),
-        },
-        ascendingOrder: false,
-        pageSize: 1,
-      });
+      /** Check if SleepSession permission is still granted */
+      checkPermissions: async () => {
+        const granted = await getGrantedPermissions();
+        const has = granted.some((p) => p.recordType === "SleepSession");
+        set({ hasPermission: has });
+      },
 
-      const record = result.records?.[0];
-      if (!record) {
-        set({
-          sleepData: {
-            duration: "0h 0m",
-            label: "No data",
-            quality: "No data",
-            qualityScore: 0,
-          },
-        });
-        return;
-      }
+      /** Fetch today's sleep data */
+      fetchTodaySleep: async () => {
+        await get().checkPermissions();
 
-      const start = new Date(record.startTime);
-      const end = new Date(record.endTime);
-      const durationMs = end.getTime() - start.getTime();
-      const durationHours = durationMs / 3600000;
-      const hours = Math.floor(durationHours);
-      const minutes = Math.floor((durationMs % 3600000) / 60000);
-      const startHour = start.getHours();
-
-      const isNap = startHour >= 9 && startHour <= 18;
-      let label = isNap ? "Nap" : "Last Night";
-      let quality = "Average";
-      let qualityScore = 5;
-
-      if (!isNap) {
-        if (durationHours < 5) {
-          quality = "Very Poor";
-          qualityScore = 2;
-        } else if (durationHours < 6) {
-          quality = "Poor";
-          qualityScore = 3;
-        } else if (durationHours < 7) {
-          quality = "Fair";
-          qualityScore = 5;
-        } else if (durationHours <= 9) {
-          quality = "Good";
-          qualityScore = 8;
-        } else if (durationHours <= 10) {
-          quality = "Fair";
-          qualityScore = 6;
-        } else {
-          quality = "Poor";
-          qualityScore = 3;
+        if (!get().hasPermission) {
+          console.log("❌ No permission: SleepSession");
+          return;
         }
-      }
 
-      set({
-        sleepData: {
-          duration: `${hours}h ${minutes}m`,
-          startTime: start.toISOString(),
-          endTime: end.toISOString(),
-          label,
-          quality,
-          qualityScore,
-        },
-      });
-    } catch (err) {
-      console.error("Failed to read sleep data:", err);
-      set({
-        sleepData: {
-          duration: "0h 0m",
-          label: "No data",
-          quality: "No data",
-          qualityScore: 0,
-        },
-      });
+        try {
+          set({ loading: true });
+
+          const now = new Date();
+          const startOfDay = new Date(
+            now.getFullYear(),
+            now.getMonth(),
+            now.getDate()
+          );
+
+          // ✔ Correct generic
+          // ✔ Correct timeRangeFilter format
+          const response = await readRecords<"SleepSession">("SleepSession", {
+            timeRangeFilter: {
+              operator: "between",
+              startTime: startOfDay.toISOString(),
+              endTime: now.toISOString(),
+            },
+          });
+
+          const totalMinutes = response.records.reduce((sum, rec) => {
+            const mins = differenceInMinutes(
+              new Date(rec.endTime),
+              new Date(rec.startTime)
+            );
+            return sum + mins;
+          }, 0);
+
+          const qualityScore = totalMinutes
+            ? Math.min(totalMinutes / 480, 1)
+            : 0;
+
+          set({
+            summary: {
+              totalMinutes,
+              qualityScore,
+              lastUpdated: Date.now(),
+            },
+          });
+
+        } catch (error) {
+          console.warn("Sleep fetch failed:", error);
+        } finally {
+          set({ loading: false });
+        }
+      },
+    }),
+    {
+      name: "sleep-store",
+      storage: createJSONStorage(() => AsyncStorage), // ✔ Correct persist storage usage
     }
-  },
-}));
+  )
+);

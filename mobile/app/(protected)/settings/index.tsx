@@ -1,7 +1,7 @@
+import OverlayWrapper from "@/components/theme/OverlayWrapper";
 import ThemeToggle from "@/components/theme/ThemeToggle";
 import { useStoreAuth } from "@/store/authStore";
 import { useThemeStore } from '@/store/themeStore';
-import { LinearGradient } from 'expo-linear-gradient';
 import { router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useState } from "react";
@@ -66,12 +66,11 @@ export default function SettingsScreen() {
   
 
   return (
-    <LinearGradient
-      colors={[colors.gradientStart, colors.gradientEnd]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={styles.gradient}
-    >
+    <OverlayWrapper
+          backgroundColor={colors.background}
+          overlayImage={require("@/assets/images/grainy_overlay.png")}
+          opacity={0.25}
+        >
       <SafeAreaView style={styles.container}>
         <ThemeToggle />
         <View style={{ padding: 20, gap: 16 }}>
@@ -85,7 +84,7 @@ export default function SettingsScreen() {
           {loading && <ActivityIndicator style={{ marginTop: 10 }} />}
         </View>
       </SafeAreaView>
-    </LinearGradient>
+    </OverlayWrapper>
   );
 }
 

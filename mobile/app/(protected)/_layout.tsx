@@ -35,21 +35,30 @@ export default function ProtectedLayout() {
     >
       <Tabs.Screen
         name="index"
-        options={{
+        options={({ route }) => ({
           tabBarLabel: "Home",
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="home" size={size} color={color} />
           ),
-        }}
+        })}
       />
 
       <Tabs.Screen
         name="settings"
-        options={{
+        options={({ route }) => ({
           tabBarLabel: "Settings",
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="settings" size={size} color={color} />
           ),
+        })}
+      />
+
+      
+      <Tabs.Screen
+        name="health"
+        options={{
+          href: null,
+          tabBarStyle: { display: "none" },
         }}
       />
     </Tabs>

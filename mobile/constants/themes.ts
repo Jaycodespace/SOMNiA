@@ -5,7 +5,7 @@ export const LightTheme = {
   colors: {
     background: "#FFE0B2",
     card: "#FFE4C4",
-    cardDarker: "#F06292",
+    cardDarker: "#FFD180",
     primary: "#FF8C42",
     text: "#3A2E2A",
     subtleText: "#6A5F5A",
