@@ -1,4 +1,5 @@
 import BackgroundWrapper from "@/components/theme/BackgroundWrapper";
+import LogoProvider from "@/components/theme/LogoProvider";
 import { useStoreAuth } from "@/store/authStore";
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
@@ -100,8 +101,17 @@ export default function CreateAccountScreen() {
                 marginBottom: 24,
               }}
             >
+              <View style={{ width: "100%", height: 80 }}>
+                            <LogoProvider
+                              source={
+                                useThemeStore.getState().theme === "dark"
+                                  ? require ("@/assets/images/somnia_text_dark.png")
+                                  : require("@/assets/images/somnia_text_light.png")
+                              }
+                            />
+                            </View>
               <View style={{ alignItems: "center", marginBottom: 24 }}>
-                <Text style={{ marginTop: 12, fontSize: 22, fontWeight: "700", color: colors.text }}>
+                <Text style={{ marginTop: 12, fontSize: 28, fontWeight: "700", color: colors.text }}>
                   Create Account
                 </Text>
               </View>

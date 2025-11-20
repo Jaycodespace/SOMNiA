@@ -1,3 +1,4 @@
+import BackgroundWrapper from "@/components/theme/BackgroundWrapper";
 import { useAppStore } from "@/store/appStore";
 import { useThemeStore } from "@/store/themeStore";
 import { router } from "expo-router";
@@ -78,15 +79,25 @@ export default function SetupHealthPermissionsScreen() {
   const healthLogo = theme === "light" ? healthLogoDark : healthLogoLight;
 
   return (
-    <View
-      style={{
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-        padding: 24,
-        backgroundColor: colors.background,
-      }}
-    >
+    <BackgroundWrapper showLogo={false}>
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          padding: 24,
+        }}
+      >
+        <View
+          style={{
+            width: "100%",
+            backgroundColor: colors.card,
+            padding: 24,
+            borderRadius: 16,
+            alignItems: "center",
+            elevation: 30
+          }}
+        >
 
       {/* Dynamic Health Connect Logo */}
       <Image
@@ -175,5 +186,7 @@ export default function SetupHealthPermissionsScreen() {
         </Text>
       </Pressable>
     </View>
+    </View>
+    </BackgroundWrapper>
   );
 }

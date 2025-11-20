@@ -35,9 +35,14 @@ export const useSleepStore = create<SleepState>((set) => ({
     const allowed = await ensureSleepPermission();
     if (!allowed) return set({ loading: false });
 
-    const today = new Date();
-    const start = new Date(today.setHours(0, 0, 0, 0));
-    const end = new Date();
+    const now = new Date();
+
+    // Start yesterday at 18:00 (captures all overnight sleep)
+    const start = new Date();
+    start.setDate(now.getDate() - 1);
+    start.setHours(18, 0, 0, 0);
+
+    const end = now;
 
     const sessions = await getSleepSessions(start, end);
 
@@ -46,7 +51,9 @@ export const useSleepStore = create<SleepState>((set) => ({
       return;
     }
 
-    const main = sessions[0];
+    // Pick the latest session that ended most recently
+    const main = sessions.sort((a, b) => b.end.getTime() - a.end.getTime())[0];
+
     const { isNap } = classifySleep(main);
     const quality = computeSleepQuality(main, isNap);
 
@@ -60,6 +67,7 @@ export const useSleepStore = create<SleepState>((set) => ({
       loading: false,
     });
   },
+
 
   fetchWeekly: async () => {
     set({ loading: true });

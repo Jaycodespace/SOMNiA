@@ -1,4 +1,4 @@
-import SleepSummary from "@/components/home/SleepRecord/SleepCard";
+import SleepSummary from "@/components/home/SleepCard";
 import OverlayWrapper from "@/components/theme/OverlayWrapper";
 import { useSleepStore } from "@/modules/sleep";
 import { useThemeStore } from "@/store/themeStore";

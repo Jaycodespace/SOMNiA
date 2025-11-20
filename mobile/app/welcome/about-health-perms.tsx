@@ -1,5 +1,4 @@
 import { useThemeStore } from "@/store/themeStore";
-import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { Pressable, ScrollView, Text } from "react-native";
 
@@ -11,23 +10,11 @@ export default function AboutHealthPermissionsScreen() {
     <ScrollView
       contentContainerStyle={{
         flexGrow: 1,
-        justifyContent: "flex-start",
+        justifyContent: "center",
         padding: 24,
         backgroundColor: colors.background,
       }}
     >
-      {/* Back Button */}
-      <Pressable
-        onPress={() => router.back()}
-        style={{
-            marginBottom: 20,
-            alignSelf: "flex-start",
-            padding: 6, // nice touch area
-        }}
-        >
-        <Ionicons name="arrow-back" size={24} color={colors.primary} />
-      </Pressable>
-
       {/* Title */}
       <Text
         style={{

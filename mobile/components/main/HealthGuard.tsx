@@ -11,6 +11,7 @@ import {
   View,
 } from "react-native";
 import { SdkAvailabilityStatus } from "react-native-health-connect";
+import BackgroundWrapper from "../theme/BackgroundWrapper";
 
 export default function HealthGuard({ children }: { children: React.ReactNode }) {
   const { colors } = useThemeStore();
@@ -73,15 +74,25 @@ export default function HealthGuard({ children }: { children: React.ReactNode })
     };
 
     return (
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: colors.background,
-          justifyContent: "center",
-          alignItems: "center",
-          paddingHorizontal: 30,
-        }}
-      >
+      <BackgroundWrapper showLogo={false}>
+            <View
+              style={{
+                flex: 1,
+                justifyContent: "center",
+                alignItems: "center",
+                padding: 24,
+              }}
+            >
+              <View
+                style={{
+                  width: "100%",
+                  backgroundColor: colors.card,
+                  padding: 24,
+                  borderRadius: 16,
+                  alignItems: "center",
+                  elevation: 30
+                }}
+              >
         <Image
           source={require("@/assets/images/health_connect_logo.png")}
           style={{ width: 120, height: 120, marginBottom: 25 }}
@@ -135,6 +146,8 @@ export default function HealthGuard({ children }: { children: React.ReactNode })
           </Text>
         </Pressable>
       </View>
+      </View>
+      </BackgroundWrapper>
     );
   }
 

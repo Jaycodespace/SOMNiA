@@ -1,5 +1,6 @@
 import { loginUser } from "@/api/auth";
 import BackgroundWrapper from "@/components/theme/BackgroundWrapper";
+import LogoProvider from "@/components/theme/LogoProvider";
 import ThemeToggle from "@/components/theme/ThemeToggle";
 import { useStoreAuth } from "@/store/authStore";
 import { useThemeStore } from "@/store/themeStore";
@@ -17,7 +18,6 @@ import {
   View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
 export default function SignInScreen() {
   const { colors } = useThemeStore();
 
@@ -64,7 +64,6 @@ export default function SignInScreen() {
           behavior={Platform.OS === "ios" ? "padding" : undefined}
         >
           <ThemeToggle />
-
           <ScrollView
             contentContainerStyle={{
               flexGrow: 1,
@@ -86,11 +85,20 @@ export default function SignInScreen() {
                 elevation: 5,
               }}
             >
+              <View style={{ width: "100%", height: 80 }}>
+              <LogoProvider
+                source={
+                  useThemeStore.getState().theme === "dark"
+                    ? require ("@/assets/images/somnia_text_dark.png")
+                    : require("@/assets/images/somnia_text_light.png")
+                }
+              />
+              </View>
               <View style={{ alignItems: "center", marginBottom: 24 }}>
                 <Text
                   style={{
                     marginTop: 12,
-                    fontSize: 22,
+                    fontSize: 28,
                     fontWeight: "700",
                     color: colors.text,
                   }}

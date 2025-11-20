@@ -1,10 +1,10 @@
 import { useThemeStore } from "@/store/themeStore";
-import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useMemo } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ImageBackground, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Animated, { useAnimatedProps } from "react-native-reanimated";
 import { Circle, Defs, FeDropShadow, Filter, LinearGradient as SVGGradient, Stop, Svg } from "react-native-svg";
+
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
@@ -29,7 +29,7 @@ export default function SleepCard({
   date,
   sleepStart,
   sleepEnd,
-  quality = 0.75,
+  quality = 0,
   qualityTextOverride,
   durationOverride,
   isNap,
@@ -82,9 +82,15 @@ export default function SleepCard({
     <TouchableOpacity activeOpacity={0.9} onPress={() => router.push("/health/sleep-records")}
       style={[styles.wrapper, { backgroundColor: colors.cardDarker}]}
     >     
-      <LinearGradient
-        colors={[colors.gradientStart + "55", colors.gradientEnd + "99"]}
+      <ImageBackground
+        source={
+          useThemeStore.getState().theme === "dark"
+            ? require("@/assets/images/night_sky.png")
+            : require("@/assets/images/noon_sky.png")
+        }
+        resizeMode="cover"
         style={styles.container}
+        imageStyle={{ opacity: 0.9 }} // Optional blending
       >
         <Text style={[styles.title, { color: colors.text }]}>
           {title ?? (computedIsNap ? "Nap Summary" : "Last Night’s Sleep")}
@@ -186,7 +192,7 @@ export default function SleepCard({
             )}
           </View>
         )}
-      </LinearGradient>
+      </ImageBackground>
     </TouchableOpacity>
   );
 }

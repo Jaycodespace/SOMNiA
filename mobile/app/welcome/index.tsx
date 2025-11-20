@@ -1,3 +1,4 @@
+import BackgroundWrapper from "@/components/theme/BackgroundWrapper";
 import { useAppStore } from "@/store/appStore";
 import { useThemeStore } from "@/store/themeStore";
 import { router } from "expo-router";
@@ -48,24 +49,37 @@ export default function WelcomeScreen() {
   };
 
   return (
+    <BackgroundWrapper showLogo={false}>
+  <View
+    style={{
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      padding: 24,
+    }}
+  >
     <View
       style={{
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
+        width: "100%",
+        backgroundColor: colors.card,
         padding: 24,
-        backgroundColor: colors.background,
+        borderRadius: 16,
+        alignItems: "center",
+        elevation: 30
       }}
     >
-
-      {/* --- SOMNIA Image --- */}
+      {/* SOMNIA Logo */}
       <Image
-        source={require("@/assets/images/somnia_text.png")}
+        source={
+          useThemeStore.getState().theme === "dark"
+            ? require("@/assets/images/somnia_text_dark.png")
+            : require("@/assets/images/somnia_text_light.png")
+        }
         style={{
           width: imageWidth,
           height: undefined,
-          aspectRatio: 3.5, // adjust if needed
-          marginBottom: 24,
+          aspectRatio: 3.5,
+          marginBottom: 50,
         }}
         resizeMode="contain"
       />
@@ -112,5 +126,8 @@ export default function WelcomeScreen() {
         </Text>
       </Pressable>
     </View>
+  </View>
+</BackgroundWrapper>
+
   );
 }
