@@ -8,12 +8,7 @@ node_modules/
 dist/
 web-build/
 expo-env.d.ts
-<<<<<<< HEAD
-
-
-=======
 *.apk
->>>>>>> test-deploy-mobile
 # Native
 .kotlin/
 *.orig.*
