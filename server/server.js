@@ -10,6 +10,8 @@ import bpRouter from './routes/bpRoutes.js';
 import stepRouter from "./routes/stepRoutes.js";
 import heartRateRouter from "./routes/heartRateRoutes.js";
 import sleepSessionRouter  from "./routes/sleepSessionRoutes.js";
+import spo2Router from "./routes/spo2Routes.js";
+
 
 const app = express();
 const port = process.env.PORT || 4000
@@ -58,5 +60,6 @@ app.use('/api/bp', bpRouter);
 app.use('/api/step',stepRouter);
 app.use('/api/heartRate',heartRateRouter);
 app.use('/api/sleepSession', sleepSessionRouter);
+app.use('/api/spo2', spo2Router);
 app.listen(port, ()=> console.log(`Server started on PORT:${port}`));
 
