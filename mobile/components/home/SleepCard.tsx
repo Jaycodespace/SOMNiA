@@ -79,7 +79,9 @@ export default function SleepCard({
   }));
 
   return (
-    <TouchableOpacity activeOpacity={0.9} onPress={() => router.push("/health/sleep-records")}
+    <TouchableOpacity 
+      activeOpacity={0.9} 
+      onPress={() => router.push("../sleep-records")}
       style={[styles.wrapper, { backgroundColor: colors.cardDarker}]}
     >     
       <ImageBackground
@@ -92,6 +94,10 @@ export default function SleepCard({
         style={styles.container}
         imageStyle={{ opacity: 0.9 }} // Optional blending
       >
+        <Text style={[styles.cardHeader, { color: colors.text + "AA" }]}>
+          Sleep
+        </Text>
+
         <Text style={[styles.title, { color: colors.text }]}>
           {title ?? (computedIsNap ? "Nap Summary" : "Last Night’s Sleep")}
         </Text>
@@ -139,16 +145,13 @@ export default function SleepCard({
               stroke="url(#sleepGradient)"
               strokeWidth={strokeWidth}
               fill="none"
-              strokeLinecap="butt"
+              strokeLinecap="round"
               strokeDasharray={circumference}
               animatedProps={animatedProps}
             />
           </Svg>
 
           <Text style={[styles.qualityText, { color: colors.text }]}>{qualityText}</Text>
-          <Text style={[styles.qualityPercent, { color: colors.text + "DD" }]}>
-            {(quality * 100).toFixed(0)}%
-          </Text>
         </View>
 
         <Text style={[styles.bottomLine, { color: colors.text + "DD" }]}>
@@ -216,6 +219,14 @@ const styles = StyleSheet.create({
   container: {
     padding: 20,
     alignItems: "center",
+  },
+  cardHeader: {
+    fontSize: 14,
+    fontWeight: "700",
+    letterSpacing: 1,
+    opacity: 0.9,
+    marginBottom: 2,
+    textTransform: "uppercase",
   },
   title: {
     fontSize: 24,

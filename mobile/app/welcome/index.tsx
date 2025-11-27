@@ -83,6 +83,15 @@ export default function WelcomeScreen() {
         }}
         resizeMode="contain"
       />
+      <Image
+        source={require("@/assets/images/bear_welcome.png")}
+        style={{
+          width: imageWidth,
+          height: undefined,
+          aspectRatio: 3.5,
+        }}
+        resizeMode="contain"
+      />
 
       <Text
         style={{

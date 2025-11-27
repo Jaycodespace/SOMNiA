@@ -29,12 +29,16 @@ export default function SetupHealthPermissionsScreen() {
 
   const healthPermissions: Permission[] = [
     { accessType: "read", recordType: "ActiveCaloriesBurned" },
-    { accessType: "read", recordType: "HeartRate" },
-    { accessType: "read", recordType: "Steps" },
-    { accessType: "read", recordType: "SleepSession" },
+    { accessType: "read", recordType: "BloodPressure" },
     { accessType: "read", recordType: "ExerciseSession" },
+    { accessType: "read", recordType: "HeartRate" },
+    { accessType: "read", recordType: "OxygenSaturation" },
+    { accessType: "read", recordType: "RestingHeartRate" },
+    { accessType: "read", recordType: "SleepSession" },
+    { accessType: "read", recordType: "Steps" },
     { accessType: "read", recordType: "TotalCaloriesBurned" },
   ];
+
 
   const handleRequestPermissions = async () => {
     try {

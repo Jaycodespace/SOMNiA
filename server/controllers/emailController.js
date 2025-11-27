@@ -81,40 +81,68 @@ export const forgotPassword = async (req, res) => {
       from: process.env.SENDER_EMAIL,
       to: user.email,
       subject: "Your Password Reset Code",
+      attachments: [
+        {
+          filename: "logo.png",
+          path: "https://res.cloudinary.com/dyvsiqgix/image/upload/v1763859031/somnia_logo_dark_wergmg.png",
+          cid: "somnia_logo"
+        },
+        {
+          filename: "text.png",
+          path: "https://res.cloudinary.com/dyvsiqgix/image/upload/v1763858999/somnia_text_dark_zjjosc.png",
+          cid: "somnia_text"
+        }
+      ],
       html: `
-        <div style="text-align: center; font-family: Arial, sans-serif;">
-          <img src="https://res.cloudinary.com/dyvsiqgix/image/upload/v1763285395/SOMNiA_n9munn.png" 
-              alt="SOMNiA Logo"
-              style="width: 420px; margin-bottom: 20px;" />
+        <div style="font-family: Arial, sans-serif;">
 
-          <h2 style="color: #333;">Password Reset Request</h2>
-          
-          <p style="font-size: 16px; color: #555;">
-            Here is your password reset code:
-          </p>
+          <!-- LOGO TABLE -->
+          <table align="center" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
+            <tr>
+              <td align="center">
+                <img src="cid:somnia_logo" alt="SOMNiA Logo" style="height: 70px;" />
+              </td>
+              <td align="center">
+                <img src="cid:somnia_text" alt="SOMNiA Text" style="height: 70px;" />
+              </td>
+            </tr>
+          </table>
 
-          <div style="
-            font-size: 32px;
-            letter-spacing: 6px;
-            font-weight: bold;
-            margin: 20px auto;
-            padding: 10px 20px;
-            background: #f3f3f3;
-            width: fit-content;
-            border-radius: 8px;">
-            ${resetCode}
+          <!-- WRAP ALL TEXT IN A CENTERED DIV -->
+          <div style="text-align: center;">
+
+            <h2 style="color: #333; margin-top: 25px;">Password Reset Request</h2>
+
+            <p style="font-size: 16px; color: #555; margin: 0;">
+              Here is your password reset code:
+            </p>
+
+            <div style="
+              font-size: 32px;
+              letter-spacing: 6px;
+              font-weight: bold;
+              margin: 20px auto;
+              padding: 10px 20px;
+              background: #f3f3f3;
+              width: fit-content;
+              border-radius: 8px;">
+              ${resetCode}
+            </div>
+
+            <h3 style="font-size: 14px; color: #777; margin: 0;">
+              This code expires in <b>5 minutes</b>.
+            </h3>
+
+            <h3 style="font-size: 12px; color: #999; margin-top: 20px;">
+              If you did not request this, please ignore this message.
+            </h3>
+
           </div>
-
-          <h3 style="font-size: 14px; color: #777;">
-            This code expires in <b>5 minutes</b>.
-          </h3>
-
-          <h3 style="font-size: 12px; color: #999; margin-top: 20px;">
-            If you did not request this, please ignore this message.
-          </h3>
         </div>
       `,
     });
+
+
 
 
     return res.json({

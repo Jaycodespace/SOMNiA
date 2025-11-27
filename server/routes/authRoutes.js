@@ -6,7 +6,9 @@ import {
     register, 
     checkUsername, 
     checkEmail,
-    resetPassword
+    resetPassword,
+    updateName,
+    deleteAccount
 } from '../controllers/authController.js';
 import userAuth from '../middleware/userAuth.js';
 
@@ -18,4 +20,6 @@ authRouter.post('/register', register);
 authRouter.post("/check-username", checkUsername);
 authRouter.post("/check-email", checkEmail);
 authRouter.post("/reset-password", resetPassword);
+authRouter.post("/update-name", updateName);
+authRouter.post("/delete-account", deleteAccount);
 export default authRouter;

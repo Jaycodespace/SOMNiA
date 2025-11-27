@@ -8,6 +8,8 @@ import { create } from "zustand";
 type User = {
   username: string;
   email: string;
+  name: string;
+  createdAt: string;
 };
 
 type AuthState = {
@@ -23,7 +25,10 @@ type AuthState = {
   goToCreateAccount: () => void;
   goToForgotPassword: () => void;
   backToSignIn: () => void;
+
+  updateUserName: (name: string) => void; // <-- ADD THIS
 };
+
 
 export const useStoreAuth = create<AuthState>((set) => ({
   user: null,
@@ -82,7 +87,7 @@ export const useStoreAuth = create<AuthState>((set) => ({
       if (decoded.exp > now) {
         set({
           isLoggedIn: true,
-          user: { username: decoded.username, email: decoded.email },
+          user: { username: decoded.username, email: decoded.email, name: decoded.name, createdAt: decoded.createdAt },
           isRestoring: false,
         });
         return;
@@ -105,7 +110,7 @@ export const useStoreAuth = create<AuthState>((set) => ({
 
         set({
           isLoggedIn: true,
-          user: { username: newDecoded.username, email: newDecoded.email },
+          user: { username: newDecoded.username, email: newDecoded.email, name: newDecoded.name, createdAt: newDecoded.createdAt },
           isRestoring: false,
         });
       } else {
@@ -123,6 +128,11 @@ export const useStoreAuth = create<AuthState>((set) => ({
   goToCreateAccount: () => set({ shouldCreateAccount: true, forgotPassword: false }),
   goToForgotPassword: () => set({ forgotPassword: true, shouldCreateAccount: false }),
   backToSignIn: () => set({ shouldCreateAccount: false, forgotPassword: false }),
+
+  updateUserName: (name: string) =>
+  set((state) => ({
+    user: state.user ? { ...state.user, name } : null,
+  })),
 }));
 
 // ✅ Auto token check (every 1 min + on app resume)
@@ -184,5 +194,5 @@ export function useAuthSession() {
       if (interval) clearInterval(interval);
       subscription.remove();
     };
-  }, [isLoggedIn, forceLogout]);
+  }, [isLoggedIn, forceLogout, appState]);
 }

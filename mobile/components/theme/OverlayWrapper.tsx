@@ -1,54 +1,45 @@
-import React, { ReactNode } from "react";
-import {
-    ImageBackground,
-    ImageSourcePropType,
-    StyleSheet,
-    View,
-} from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import React from "react";
+import { Image, ImageSourcePropType, StyleSheet } from "react-native";
 
 interface OverlayWrapperProps {
-  children: ReactNode;
-
-  /** Optional overlay image */
-  overlayImage?: ImageSourcePropType;
-
-  /** Opacity of overlay image */
-  opacity?: number;
-
-  /** Enable or disable overlay layer */
-  enabled?: boolean;
-
-  /** Base background color behind the overlay */
-  backgroundColor?: string; // <-- NEW
+  children: React.ReactNode;
+  colors: [string, string]; // two gradient colors
+  overlayImage?: ImageSourcePropType; // optional overlay image
+  overlayOpacity?: number; // optional opacity for overlay image
 }
 
 export default function OverlayWrapper({
   children,
+  colors,
   overlayImage,
-  opacity = 0.1,
-  enabled = true,
-  backgroundColor = "transparent", // default transparent
+  overlayOpacity = 0.3,
 }: OverlayWrapperProps) {
   return (
-    <View style={[styles.full, { backgroundColor }]}>
-      {enabled && overlayImage ? (
-        <ImageBackground
+    <LinearGradient colors={colors} style={styles.container}>
+      {overlayImage && (
+        <Image
           source={overlayImage}
-          style={styles.full}
+          style={[styles.overlayImage, { opacity: overlayOpacity }]}
           resizeMode="cover"
-          imageStyle={{ opacity }}
-        >
-          {children}
-        </ImageBackground>
-      ) : (
-        <View style={styles.full}>{children}</View>
+        />
       )}
-    </View>
+      {children}
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  full: {
+  container: {
+    flex: 1,
+  },
+  overlayImage: {
+    ...StyleSheet.absoluteFillObject,
+    width: "100%",
+    height: "100%",
+  },
+
+  content: {
     flex: 1,
   },
 });

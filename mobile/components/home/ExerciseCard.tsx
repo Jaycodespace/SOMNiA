@@ -1,110 +1,124 @@
-import { useExerciseStore } from "@/store/health/exerciseStore";
-import { Feather } from "@expo/vector-icons";
-import React, { useEffect, useState } from "react";
+import OverlayWrapper from "@/components/theme/OverlayWrapper";
+import { useThemeStore } from "@/store/themeStore";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import React from "react";
 import {
-  ActivityIndicator,
-  Pressable,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View
 } from "react-native";
 
-export default function ExerciseCard() {
-  const { exerciseData, getExerciseData, hasExercisePermission } =
-    useExerciseStore();
-  const [loading, setLoading] = useState(true);
-  const [hasPermission, setHasPermission] = useState(false);
+interface ExerciseCardProps {
+  exerciseType: string;
+  durationMinutes: number;
+  durationSeconds: number;
+  date: Date;
+}
 
-  useEffect(() => {
-    const loadData = async () => {
-      const granted = await hasExercisePermission();
-      setHasPermission(granted);
-      if (granted) await getExerciseData();
-      setLoading(false);
-    };
-    loadData();
-  }, [getExerciseData, hasExercisePermission]);
+export default function ExerciseCard({
+  exerciseType,
+  durationMinutes,
+  durationSeconds,
+  date,
+}: ExerciseCardProps) {
+  const { colors } = useThemeStore();
+  const router = useRouter();
 
-  if (loading) {
-    return (
-      <View style={[styles.card, { alignItems: "center" }]}>
-        <ActivityIndicator color="#28A745" />
-        <Text style={{ marginTop: 8, color: "#777" }}>
-          Loading exercise data...
-        </Text>
-      </View>
-    );
-  }
-
-  if (!hasPermission) {
-    return (
-      <Pressable style={[styles.card, { alignItems: "center" }]}>
-        <Feather name="activity" size={22} color="#28A745" />
-        <Text style={styles.cardTitle}>Exercise</Text>
-        <Text style={{ color: "#777", marginTop: 8 }}>
-          Requires Health Connect permission
-        </Text>
-      </Pressable>
-    );
-  }
+  const formattedDate = date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 
   return (
-    <Pressable style={styles.card} onPress={getExerciseData}>
-      <View style={styles.cardHeader}>
-        <Feather name="activity" size={20} color="#28A745" />
-        <Text style={styles.cardTitle}>Exercise</Text>
-      </View>
+    <TouchableOpacity
+      activeOpacity={0.9}
+      onPress={() => router.push("/exercise-records")}
+      style={[styles.wrapper, { backgroundColor: colors.cardDarker }]}
+    >
+      <OverlayWrapper
+        colors={[colors.gradientTop, colors.gradientBottom]}
+        overlayImage={require("@/assets/images/crayon_overlay.png")}
+        overlayOpacity={0.02}
+      >
+        <View style={styles.container}>
+          {/* HEADER ROW */}
+          <View style={styles.headerRow}>
 
-      {exerciseData ? (
-        <>
-          <Text style={styles.exerciseType}>{exerciseData.type}</Text>
-          <Text style={styles.duration}>{exerciseData.duration}</Text>
-          <Text style={styles.calories}>
-            🔥 {exerciseData.calories} kcal burned
-          </Text>
-        </>
-      ) : (
-        <Text style={styles.subText}>No exercise data available</Text>
-      )}
-    </Pressable>
+            <View>
+              <Text style={[styles.exerciseType, { color: colors.text }]}>
+                {exerciseType}
+              </Text>
+              <Text style={[styles.subType, { color: colors.text + "AA" }]}>Workout Type</Text>
+            </View>
+
+            <View style={{ flex: 1 }} />
+
+            <Text style={[styles.date, { color: colors.text + "AA" }]}>{formattedDate}</Text>
+          </View>
+
+          {/* COMPACT STATS */}
+          <View style={styles.compactStats}>
+            <View style={styles.statRow}>
+              <MaterialCommunityIcons name="timer" size={22} color={colors.text} />
+              <Text style={[styles.statText, { color: colors.text }]}>
+                {durationMinutes} min {durationSeconds}s
+              </Text>
+            </View>
+
+            <View style={styles.statRow}>
+              <MaterialCommunityIcons name="fire" size={22} color={colors.text} />
+            </View>
+          </View>
+        </View>
+      </OverlayWrapper>
+    </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-    elevation: 2,
+  wrapper: {
+    width: "100%",
+    borderRadius: 18,
+    overflow: "hidden",
+    borderWidth: 3,
+    borderColor: "rgba(255,255,255,0.2)",
   },
-  cardHeader: {
+  container: {
+    padding: 16,
+  },
+  headerRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 8,
-    gap: 6,
+    marginBottom: 12,
   },
-  cardTitle: { fontSize: 16, fontWeight: "600", color: "#333" },
   exerciseType: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "700",
-    color: "#111",
+    letterSpacing: 0.3,
   },
-  duration: {
-    fontSize: 16,
+  subType: {
+    fontSize: 13,
     fontWeight: "500",
-    color: "#444",
+    marginTop: -2,
+  },
+  date: {
+    fontSize: 13,
+  },
+  compactStats: {
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginTop: 4,
   },
-  calories: {
-    fontSize: 14,
-    color: "#28A745",
-    marginTop: 6,
-    fontWeight: "500",
+  statRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
   },
-  subText: { fontSize: 14, color: "#777", marginTop: 4 },
+  statText: {
+    fontSize: 16,
+    fontWeight: "600",
+  },
 });

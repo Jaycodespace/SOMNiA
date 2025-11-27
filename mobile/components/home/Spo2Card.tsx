@@ -5,17 +5,21 @@ import { useRouter } from "expo-router";
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
-interface StepsCardProps {
-  steps: number;
+interface SpO2CardProps {
   date?: Date;
+  saturation: number; // 0–1 OR 0–100
+  statusTextOverride?: string;
 }
 
-export default function StepsCard({
-  steps,
+export default function SpO2Card({
   date = new Date(),
-}: StepsCardProps) {
+  saturation,
+  statusTextOverride,
+}: SpO2CardProps) {
   const { colors } = useThemeStore();
   const router = useRouter();
+
+  const saturationDecimal = saturation > 1 ? saturation / 100 : saturation;
 
   const formattedDate = date.toLocaleDateString("en-US", {
     month: "short",
@@ -23,10 +27,19 @@ export default function StepsCard({
     year: "numeric",
   });
 
+  const getStatusText = (v: number) => {
+    if (v >= 0.95) return "Optimal";
+    if (v >= 0.92) return "Acceptable";
+    if (v >= 0.90) return "Low";
+    return "Critical";
+  };
+
+  const statusText = statusTextOverride ?? getStatusText(saturationDecimal);
+
   return (
     <TouchableOpacity
       activeOpacity={0.9}
-      onPress={() => router.push("/steps-records")}
+      onPress={() => router.push("/spo2-records")}
       style={[styles.wrapper, { backgroundColor: colors.cardDarker }]}
     >
       <OverlayWrapper
@@ -38,9 +51,7 @@ export default function StepsCard({
 
           {/* HEADER ROW */}
           <View style={styles.headerRow}>
-            <Text style={[styles.title, { color: colors.text }]}>
-              Today&apos;s Steps
-            </Text>
+            <Text style={[styles.title, { color: colors.text }]}>SpO₂ Level</Text>
 
             <View style={{ flex: 1 }} />
 
@@ -50,17 +61,21 @@ export default function StepsCard({
           </View>
 
           {/* MAIN VALUE ROW */}
-          <View style={styles.stepsRow}>
+          <View style={styles.mainRow}>
             <MaterialCommunityIcons
-              name="walk"
+              name="water-percent"
               size={30}
               color={colors.text}
               style={{ marginRight: 8 }}
             />
 
             <View>
-              <Text style={[styles.stepsNumber, { color: colors.text }]}>
-                {steps.toLocaleString()}
+              <Text style={[styles.percentText, { color: colors.text }]}>
+                {(saturationDecimal * 100).toFixed(0)}%
+              </Text>
+
+              <Text style={[styles.statusText, { color: colors.text + "BB" }]}>
+                {statusText}
               </Text>
             </View>
           </View>
@@ -83,7 +98,7 @@ const styles = StyleSheet.create({
     padding: 16,
   },
 
-  /* HEADER */
+  /* HEADER ROW */
   headerRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -98,13 +113,13 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
 
-  /* MAIN STEPS VALUE */
-  stepsRow: {
+  /* MAIN VALUE */
+  mainRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 6,
+    marginBottom: 4,
   },
-  stepsNumber: {
+  percentText: {
     fontSize: 32,
     fontWeight: "700",
     lineHeight: 34,
@@ -113,17 +128,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
     marginTop: -2,
-  },
-
-  /* GOAL */
-  goalRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    marginTop: 4,
-  },
-  goalText: {
-    fontSize: 14,
-    fontWeight: "600",
   },
 });

@@ -29,10 +29,17 @@ export const login = async (req, res) => {
       return res.status(401).json({ success: false, message: "Invalid password" });
     }
 
-    const payload = { id: user._id, username: user.username, email: user.email };
+    const payload = { 
+      id: user._id,
+      username: user.username,
+      email: user.email,
+      name: user.name,
+      createdAt: user.createdAt
+    };
 
     const accessToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "15m" });
     const refreshToken = jwt.sign(payload, process.env.JWT_REFRESH_SECRET, { expiresIn: "7d" });
+
 
     user.refreshToken = refreshToken;
     await user.save();
@@ -47,7 +54,7 @@ export const login = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "Login successful!",
-      user: { _id: user._id, username: user.username, email: user.email },
+      user: { _id: user._id, username: user.username, email: user.email, name: user.name },
       accessToken,
       refreshToken,
     });
@@ -78,10 +85,17 @@ export const refreshToken = async (req, res) => {
       return res.status(403).json({ success: false, message: "Invalid refresh token" });
     }
 
-    const payload = { id: user._id, username: user.username, email: user.email };
+    const payload = { 
+      id: user._id,
+      username: user.username,
+      email: user.email,
+      name: user.name,
+      createdAt: user.createdAt
+    };
 
     const newAccessToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "15m" });
     const newRefreshToken = jwt.sign(payload, process.env.JWT_REFRESH_SECRET, { expiresIn: "7d" });
+
 
     user.refreshToken = newRefreshToken;
     await user.save();
@@ -334,6 +348,105 @@ export const resetPassword = async (req, res) => {
     });
   }
 };
+
+export const updateName = async (req, res) => {
+  try {
+    const userId = req.userId; // comes from auth middleware
+    const { name } = req.body;
+
+    if (!name || name.trim().length === 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Name cannot be empty" 
+      });
+    }
+
+    // Optional: limit name length
+    if (name.length > 40) {
+      return res.status(400).json({
+        success: false,
+        message: "Name is too long (max 40 characters)",
+      });
+    }
+
+    const user = await userModel.findById(userId);
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "User not found" 
+      });
+    }
+
+    user.name = name.trim();
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Name updated successfully",
+      user: {
+        _id: user._id,
+        username: user.username,
+        email: user.email,
+        name: user.name,
+      }
+    });
+  } catch (error) {
+    console.error("Update name error:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+export const deleteAccount = async (req, res) => {
+  try {
+    const userId = req.userId;
+    const { password } = req.body;
+
+    if (!password) {
+      return res.status(400).json({
+        success: false,
+        message: "Password confirmation required",
+      });
+    }
+
+    const user = await userModel.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    // Verify password
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({
+        success: false,
+        message: "Incorrect password",
+      });
+    }
+
+    // Delete user
+    await userModel.findByIdAndDelete(userId);
+
+    // Clear refresh token cookie
+    res.clearCookie("refreshToken");
+
+    return res.status(200).json({
+      success: true,
+      message: "Account deleted successfully",
+    });
+  } catch (error) {
+    console.error("Delete account error:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
 
 
 

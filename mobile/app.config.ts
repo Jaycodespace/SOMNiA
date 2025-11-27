@@ -17,17 +17,20 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   android: {
     adaptiveIcon: {
       backgroundColor: '#E6F4FE',
-      foregroundImage: './assets/images/android-icon-foreground.png',
-      backgroundImage: './assets/images/android-icon-background.png',
-      monochromeImage: './assets/images/android-icon-monochrome.png',
+      foregroundImage: './assets/images/icon.png',
+      backgroundImage: './assets/images/night_sky.png',
+      monochromeImage: './assets/images/icon.png',
     },
     edgeToEdgeEnabled: true,
     predictiveBackGestureEnabled: false,
     package: 'com.somnia.somniamobile',
     permissions: [
       'android.permission.health.READ_ACTIVE_CALORIES_BURNED',
+      'android.permission.health.READ_BLOOD_PRESSURE',
       'android.permission.health.READ_EXERCISE',
       'android.permission.health.READ_HEART_RATE',
+      'android.permission.health.READ_OXYGEN_SATURATION',
+      'android.permission.health.READ_RESTING_HEART_RATE',
       'android.permission.health.READ_SLEEP',
       'android.permission.health.READ_STEPS',
       'android.permission.health.READ_TOTAL_CALORIES_BURNED',

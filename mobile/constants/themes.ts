@@ -9,6 +9,7 @@ export const LightTheme = {
     primary: "#FF8C42",
     text: "#3A2E2A",
     subtleText: "#6A5F5A",
+    error: "#ED2124",
     border: "#F2D3B3",
     tabBarActiveTint: "#FF6A00",
     tabBarInactiveTint: "#B38A72",
@@ -17,6 +18,8 @@ export const LightTheme = {
     gradientEnd: "#FF8C42",
     borderStrong: "#D81B60",
     borderStrongDark: "#2E3F57",
+    gradientTop: "#F79772",
+    gradientBottom: "#EB7243",
   },
 };
 
@@ -29,6 +32,7 @@ export const DarkTheme = {
     primary: "#415A77",
     text: "#E0E1DD",
     subtleText: "#778DA9",
+    error: "#A60F12",
     border: "#25344A",
     tabBarActiveTint: "#7FC8F8",
     tabBarInactiveTint: "#415A77",
@@ -37,6 +41,8 @@ export const DarkTheme = {
     gradientEnd: "#3D2C8D",
     borderStrong: "#4B0082",
     borderStrongDark: "#0D1B2A",
+    gradientTop: "#423761",
+    gradientBottom: "#291F41",
   },
 };
 

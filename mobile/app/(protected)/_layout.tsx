@@ -1,61 +1,170 @@
 import { useThemeStore } from "@/store/themeStore";
 import { Ionicons } from "@expo/vector-icons";
+import type { BottomTabNavigationOptions } from "@react-navigation/bottom-tabs";
+import { getFocusedRouteNameFromRoute, RouteProp } from "@react-navigation/native";
 import { Tabs } from "expo-router";
-import React from "react";
+
+const getTabVisibilityOptions = (
+  route: RouteProp<Record<string, object | undefined>, string>,
+  hiddenScreens: string[],
+  themedTabStyle: any
+): BottomTabNavigationOptions => {
+  const routeName = getFocusedRouteNameFromRoute(route) ?? "";
+  const isHidden = hiddenScreens.includes(routeName);
+
+  return {
+    tabBarStyle: {
+      ...themedTabStyle,
+      display: isHidden ? "none" : "flex",
+    },
+  };
+};
 
 export default function ProtectedLayout() {
-  const { colors, theme } = useThemeStore();
+  const { colors } = useThemeStore();
+
+  const themedTabStyle = {
+    backgroundColor: colors.tabBarBackground,
+    borderTopWidth: 3,          // 👈 top border for tab bar
+    borderTopColor: colors.border,
+  };
 
   return (
     <Tabs
       screenOptions={{
-        headerShown: false,
+        headerTitle: "",               // hide text
+        headerShadowVisible: false,    // remove default shadow
+        headerStyle: {
+          backgroundColor: colors.card,
+          height: 50,
+          borderBottomWidth: 3,        // 👈 add bottom border for header
+          borderBottomColor: colors.border,
+        },
 
         tabBarActiveTintColor: colors.tabBarActiveTint,
         tabBarInactiveTintColor: colors.tabBarInactiveTint,
-        tabBarStyle: {
-          backgroundColor: colors.tabBarBackground,
-          borderTopColor: theme === "dark" 
-            ? colors.borderStrongDark 
-            : colors.borderStrong,
-          paddingBottom: 8,
-          borderTopWidth: 1.5,
-
-          elevation: 20,
-          shadowColor: "#000",
-          shadowOpacity: 0.15,
-          shadowRadius: 12,
-          shadowOffset: { width: 0, height: -4 },
-        },
-        tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: "600",
-        },
+        tabBarStyle: themedTabStyle,
       }}
     >
       <Tabs.Screen
         name="index"
         options={({ route }) => ({
-          tabBarLabel: "Home",
+          ...getTabVisibilityOptions(route, ["sleep-records"], themedTabStyle),
+          title: "Home",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home" size={size} color={color} />
+            <Ionicons name="home-outline" size={size} color={color} />
           ),
         })}
       />
+
+      <Tabs.Screen
+        name="ai-assist"
+        options={({ route }) => ({
+          ...getTabVisibilityOptions(route, ["info"], themedTabStyle),
+          title: "Sleep Help",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="sparkles-outline" size={size} color={color} />
+          ),
+        })}
+      />
+
+      <Tabs.Screen
+        name="diary"
+        options={({ route }) => ({
+          ...getTabVisibilityOptions(route, ["info"], themedTabStyle),
+          title: "Diary",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="book-outline" size={size} color={color} />
+          ),
+        })}
+      />
+
 
       <Tabs.Screen
         name="settings"
         options={({ route }) => ({
-          tabBarLabel: "Settings",
+          ...getTabVisibilityOptions(route, ["account"], themedTabStyle),
+          title: "Settings",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="settings" size={size} color={color} />
+            <Ionicons name="settings-outline" size={size} color={color} />
           ),
         })}
       />
 
-      
       <Tabs.Screen
-        name="health"
+        name="account"
+        options={{
+          href: null,
+          tabBarStyle: { display: "none" },
+        }}
+      />
+
+      <Tabs.Screen
+        name="health-connect"
+        options={{
+          href: null,
+          tabBarStyle: { display: "none" },
+        }}
+      />
+
+      <Tabs.Screen
+        name="data-privacy"
+        options={{
+          href: null,
+          tabBarStyle: { display: "none" },
+        }}
+      />
+
+      <Tabs.Screen
+        name="about-app"
+        options={{
+          href: null,
+          tabBarStyle: { display: "none" },
+        }}
+      />
+
+      <Tabs.Screen
+        name="suggestions"
+        options={{
+          href: null,
+          tabBarStyle: { display: "none" },
+        }}
+      />
+
+      <Tabs.Screen
+        name="sleep-records"
+        options={{
+          href: null,
+          tabBarStyle: { display: "none" },
+        }}
+      />
+
+      <Tabs.Screen
+        name="steps-records"
+        options={{
+          href: null,
+          tabBarStyle: { display: "none" },
+        }}
+      />
+
+      <Tabs.Screen
+        name="exercise-records"
+        options={{
+          href: null,
+          tabBarStyle: { display: "none" },
+        }}
+      />
+
+      <Tabs.Screen
+        name="heart-rate-records"
+        options={{
+          href: null,
+          tabBarStyle: { display: "none" },
+        }}
+      />
+
+      <Tabs.Screen
+        name="spo2-records"
         options={{
           href: null,
           tabBarStyle: { display: "none" },
