@@ -114,11 +114,9 @@ export default function WelcomeScreen() {
           lineHeight: 22,
         }}
       >
-        This app is part of a research exploration aimed at identifying and
-        predicting the probable causes of insomnia. By analyzing data patterns
-        and applying machine learning techniques, the platform seeks to uncover
-        insights that could contribute to a better understanding of sleep
-        disorders.
+        This app supports our research on identifying and predicting
+        possible causes of insomnia. Through data analysis and AI, we
+        aim to better understand sleep disorders.
       </Text>
 
       <Pressable

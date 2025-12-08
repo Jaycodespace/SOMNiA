@@ -7,8 +7,8 @@ const lightBg = require("@/assets/images/noon_sky.png");
 const darkBg = require("@/assets/images/night_sky.png");
 
 // Logo overlays
-const lightLogo = require("@/assets/images/somnia_logo_light.png");
-const darkLogo = require("@/assets/images/somnia_logo_dark.png");
+const lightLogo = require("@/assets/images/somniaLogo_light.png");
+const darkLogo = require("@/assets/images/somniaLogo_BG.png");
 
 interface Props {
   children: ReactNode;
