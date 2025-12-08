@@ -13,11 +13,16 @@ FEATURE_NAMES = [
     "hr_mean",
     "hr_min",
     "hr_max",
+    "spo2_mean",
+    "spo2_min",
+    "spo2_max",
     "sleep_hours",
     "steps_total",
     "exercise_minutes",
     "bp_sys_mean",
     "bp_dia_mean",
+    "stress_score",
+    "sleep_score",
 ]
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))

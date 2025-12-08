@@ -1,6 +1,6 @@
 # ai_service/app/main.py (top part only – replacing DayData/Predict models)
 
-from typing import List
+from typing import List, Optional
 import joblib
 import numpy as np
 import torch
@@ -12,25 +12,24 @@ from .insomnia_model_def import InsomniaNet
 
 
 class DayData(BaseModel):
-    """
-    One aggregated day for a user.
+    hr_mean: Optional[float] = None
+    hr_min: Optional[float] = None
+    hr_max: Optional[float] = None
 
-    All fields come from Mongo via your Node backend:
-      - HeartRate collection   -> hr_mean, hr_min, hr_max
-      - SleepSession           -> sleep_hours
-      - Steps                  -> steps_total
-      - ExerciseSession        -> exercise_minutes
-      - BloodPressure          -> bp_sys_mean, bp_dia_mean
-    """
+    spo2_mean: Optional[float] = None
+    spo2_min: Optional[float] = None
+    spo2_max: Optional[float] = None
 
-    hr_mean: float
-    hr_min: float
-    hr_max: float
-    sleep_hours: float
-    steps_total: float
-    exercise_minutes: float
-    bp_sys_mean: float
-    bp_dia_mean: float
+    sleep_hours: Optional[float] = None
+    sleep_score: Optional[float] = None
+
+    steps_total: Optional[float] = None
+    exercise_minutes: Optional[float] = None
+
+    bp_sys_mean: Optional[float] = None
+    bp_dia_mean: Optional[float] = None
+
+    stress_score: Optional[float] = None
 
 
 class PredictRequest(BaseModel):
@@ -73,7 +72,10 @@ def request_to_tensor(req: PredictRequest) -> torch.Tensor:
         row = [getattr(d, name) for name in FEATURE_NAMES]
         seq.append(row)
 
+    
     arr = np.array(seq, dtype=np.float32)
+
+    arr = np.nan_to_num(arr, nan=0.0, posinf=0.0, neginf=0.0)
     arr_scaled = scaler.transform(arr)
     arr_scaled = np.expand_dims(arr_scaled, axis=0)  
     tensor = torch.from_numpy(arr_scaled).to(device)
@@ -104,3 +106,4 @@ def predict(req: PredictRequest):
         insomnia_risk=risk,
         message="Insomnia risk computed successfully.",
     )
+

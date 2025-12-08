@@ -11,7 +11,7 @@ import stepRouter from "./routes/stepRoutes.js";
 import heartRateRouter from "./routes/heartRateRoutes.js";
 import sleepSessionRouter  from "./routes/sleepSessionRoutes.js";
 import spo2Router from "./routes/spo2Routes.js";
-
+import aiRouter from "./routes/aiRoutes.js"; 
 
 const app = express();
 const port = process.env.PORT || 4000
@@ -19,7 +19,8 @@ connectDB();
 
 const allowedOrigins = [
     'http://localhost:5173',         // Vite (web) frontend
-    'https://som-ni-a.vercel.app',  // Deployed frontend         
+    'https://som-ni-a.vercel.app',  // Deployed frontend     
+    'http://localhost:8001',    
     'http://localhost:8081',         // Expo Go default local web (Expo dev tools)
     'http://localhost:8080',         // Expo Go default local web (Expo dev tools)
     'http://localhost:4000',
@@ -61,5 +62,7 @@ app.use('/api/step',stepRouter);
 app.use('/api/heartRate',heartRateRouter);
 app.use('/api/sleepSession', sleepSessionRouter);
 app.use('/api/spo2', spo2Router);
+app.use('/api/ai', aiRouter);  
+
 app.listen(port, ()=> console.log(`Server started on PORT:${port}`));
 
