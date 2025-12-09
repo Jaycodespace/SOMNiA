@@ -122,25 +122,6 @@ export default function Register() {
           <Text style={styles.loginButtonText}>{isLoading ? 'Loading...' : 'Sign Up'}</Text>
         </TouchableOpacity>
         <View style={styles.signUpSpacing} />
-        
-        {/* Divider */}
-        <View style={styles.dividerRow}>
-          <View style={styles.dividerLine} />
-          <Text style={styles.orText}>Or</Text>
-          <View style={styles.dividerLine} />
-        </View>
-
-        {/* Social Buttons */}
-        <View style={styles.socialRow}>
-          <TouchableOpacity style={[styles.socialBtnFull, { marginRight: 6 }]}> 
-            <Image source={require('../../assets/images/google.png')} style={styles.socialIconFull} />
-            <Text style={styles.socialBtnText}>Google</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.socialBtnFull, { marginLeft: 6 }]}> 
-            <Image source={require('../../assets/images/facebook.png')} style={styles.socialIconFull} />
-            <Text style={styles.socialBtnText}>Facebook</Text>
-          </TouchableOpacity>
-        </View>
       </View>
     </LinearGradient>
   );
