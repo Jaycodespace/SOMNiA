@@ -5,8 +5,7 @@ import styles from '../assets/styles/home.styles';
 import LinearGradient from 'react-native-linear-gradient';
 import BottomNav from '../components/BottomNav';
 import { LineChart } from 'react-native-chart-kit';
-import SleepReco from './sleepReco';
-import Diary from './diary';
+import SleepAnalysis from './sleepAnalysis';
 import Profile from './profile';
 import Tips from './tips';
 import { ExerciseType, SleepStageType, RecordResult } from 'react-native-health-connect';
@@ -33,6 +32,11 @@ export default function Home() {
   const [exerSession, setExerSession] = useState("");
   const [exerType, setExerType] = useState("");
   const [latestHeartRate, setLatestHeartRate] = useState(0);
+  const [latestSpO2, setLatestSpO2] = useState<number | null>(null);
+  const [latestBloodPressure, setLatestBloodPressure] = useState<{ systolic: number | null; diastolic: number | null }>({
+    systolic: null,
+    diastolic: null,
+  });
   const [totalSleepHours, setTotalSleepHours] = useState("");
   const [totalSteps, setTotalSteps] = useState(0);
   const [sleepData, setSleepData] = useState({
@@ -45,6 +49,33 @@ export default function Home() {
       },
     ],
   });
+  const sleepTargetHours = 7;
+
+  const sleepHours = (() => {
+    if (sleepDataRaw.length > 0) {
+      const session = sleepDataRaw[0];
+      if (session?.startTime && session?.endTime) {
+        const start = new Date(session.startTime);
+        const end = new Date(session.endTime);
+        const totalMs = end.getTime() - start.getTime();
+        return Math.max(totalMs / (1000 * 60 * 60), 0);
+      }
+    }
+    if (totalSleepHours) {
+      const match = totalSleepHours.match(/([\d.]+)/);
+      if (match) return parseFloat(match[1]);
+    }
+    return 0;
+  })();
+
+  const sleepStatus =
+    sleepHours > 7
+      ? 'Quality sleep'
+      : sleepHours >= 6
+        ? 'Good sleep'
+        : 'Poor sleep';
+
+  const sleepHoursDisplay = sleepHours > 0 ? sleepHours.toFixed(1) : '0';
   
   useEffect(() => {
     const fetchHealthData = async () => {
@@ -57,103 +88,103 @@ export default function Home() {
         });
       }
 
-      const isInitialized = await initialize();
+      // Health Connect permission-driven requests are disabled for now to avoid prompts.
+      // const isInitialized = await initialize();
+      //
+      // if (!isInitialized) {
+      //   throw new Error('CLIENT_NOT_INITIALIZED');
+      // }
+      // 
+      // // Steps
+      // const steps = await readSteps();
+      // setStepsData(steps);
+      // const totalSteps = steps.reduce((sum, record) => sum + (record.count || 0), 0);
+      // setTotalSteps(totalSteps);
+      // 
+      // // Exercise
+      // const exerciseSession = await readExerciseSession();
+      // if (exerciseSession.length > 0) {
+      //   const lastExercise = exerciseSession.sort((a, b) => new Date(b.endTime).getTime() - new Date(a.endTime).getTime())[0];
+      //   const start = new Date(lastExercise.startTime);
+      //   const end = new Date(lastExercise.endTime);
+      //   const totalExerciseMs = end.getTime() - start.getTime();
+      //   const totalMinutes = Math.floor(totalExerciseMs / (1000 * 60));
+      //   const hours = Math.floor(totalMinutes / 60);
+      //   const minutes = totalMinutes % 60;
+      //   let formattedExercise = '';
+      //
+      //   if (hours > 0) {
+      //     formattedExercise = `${hours} hour${hours !== 1 ? 's' : ''} and ${minutes} minute${minutes !== 1 ? 's' : ''}`;
+      //   } else {
+      //     formattedExercise = `${minutes} minute${minutes !== 1 ? 's' : ''}`;
+      //   }
+      //   
+      //   setExerSession(formattedExercise);
+      //
+      //   const getExerciseName = (value: number): string | undefined => {
+      //     return Object.keys(ExerciseType).find(
+      //       (key) => ExerciseType[key as keyof typeof ExerciseType] === value
+      //     );
+      //   };
+      //   const exerciseName = getExerciseName(exerciseSession[0].exerciseType);
+      //   setExerType(exerciseName || 'Unknown');
+      // }
+      // 
+      // // Heart Rate
+      // const heartRate = await readHeartRate();
+      // setHeartRateData(heartRate);
+      // if (heartRate.length > 0 && heartRate[0].samples.length > 0) {
+      //   setLatestHeartRate(heartRate[0].samples[0].beatsPerMinute);
+      // }
 
-      if (!isInitialized) {
-        throw new Error('CLIENT_NOT_INITIALIZED');
-      }
-      
-      // Steps
-      const steps = await readSteps();
-      setStepsData(steps);
-      const totalSteps = steps.reduce((sum, record) => sum + (record.count || 0), 0);
-      setTotalSteps(totalSteps);
-      
-      // Exercise
-      const exerciseSession = await readExerciseSession();
-      if (exerciseSession.length > 0) {
-        const lastExercise = exerciseSession.sort((a, b) => new Date(b.endTime).getTime() - new Date(a.endTime).getTime())[0];
-        const start = new Date(lastExercise.startTime);
-        const end = new Date(lastExercise.endTime);
-        const totalExerciseMs = end.getTime() - start.getTime();
-        const totalMinutes = Math.floor(totalExerciseMs / (1000 * 60));
-        const hours = Math.floor(totalMinutes / 60);
-        const minutes = totalMinutes % 60;
-        let formattedExercise = '';
+      // // Sleep Session
+      // const sleep = await readSleepSession();
+      // setSleepDataRaw(sleep);
+      // const start = new Date(sleep[0].startTime);
+      // const end = new Date(sleep[0].endTime);
+      // const totalSleepMs = end.getTime() - start.getTime();
+      // const totalMinutes = Math.floor(totalSleepMs / (1000 * 60));
+      // const hours = Math.floor(totalMinutes / 60);
+      // const minutes = totalMinutes % 60;
+      // const formattedSleep = `${hours} hour${hours !== 1 ? 's' : ''} and ${minutes} minute${minutes !== 1 ? 's' : ''}`;
+      // setTotalSleepHours(formattedSleep);
 
-        if (hours > 0) {
-          formattedExercise = `${hours} hour${hours !== 1 ? 's' : ''} and ${minutes} minute${minutes !== 1 ? 's' : ''}`;
-        } else {
-          formattedExercise = `${minutes} minute${minutes !== 1 ? 's' : ''}`;
-        }
-        
-        setExerSession(formattedExercise);
+      // // Sleep Graph
+      // const labels: string[] = [];
+      // const data: number[] = [];
+      // const sleepStages = sleep.flatMap(session => session.stages || []);
 
-        const getExerciseName = (value: number): string | undefined => {
-          return Object.keys(ExerciseType).find(
-            (key) => ExerciseType[key as keyof typeof ExerciseType] === value
-          );
-        };
-        const exerciseName = getExerciseName(exerciseSession[0].exerciseType);
-        setExerType(exerciseName || 'Unknown');
-      }
-      
-      // Heart Rate
-      const heartRate = await readHeartRate();
-      setHeartRateData(heartRate);
-      if (heartRate.length > 0 && heartRate[0].samples.length > 0) {
-        setLatestHeartRate(heartRate[0].samples[0].beatsPerMinute);
-      }
+      // const getStageValue = (value: number): number => {
+      //   switch (value) {
+      //     case SleepStageType.AWAKE: return 1;
+      //     case SleepStageType.LIGHT: return 2;
+      //     case SleepStageType.DEEP: return 3;
+      //     case SleepStageType.REM: return 4;
+      //     default: return 0;
+      //   }
+      // };
 
-      // Sleep Session
-      const sleep = await readSleepSession();
-      setSleepDataRaw(sleep);
-      // console.log(sleep[0].sta);
-      const start = new Date(sleep[0].startTime);
-      const end = new Date(sleep[0].endTime);
-      const totalSleepMs = end.getTime() - start.getTime();
-      const totalMinutes = Math.floor(totalSleepMs / (1000 * 60));
-      const hours = Math.floor(totalMinutes / 60);
-      const minutes = totalMinutes % 60;
-      const formattedSleep = `${hours} hour${hours !== 1 ? 's' : ''} and ${minutes} minute${minutes !== 1 ? 's' : ''}`;
-      setTotalSleepHours(formattedSleep);
+      // sleepStages.forEach((stage) => {
+      //   const start = new Date(stage.startTime);
+      //   const hour = start.getHours();
+      //   const minute = String(start.getMinutes()).padStart(2, '0');
+      //   const ampm = hour >= 12 ? 'PM' : 'AM';
+      //   const displayHour = hour % 12 || 12;
+      //   labels.push(`${displayHour}:${minute} ${ampm}`);
+      //   const numericValue = getStageValue(stage.stage);
+      //   data.push(numericValue);
+      // });
 
-      // Sleep Graph
-      const labels: string[] = [];
-      const data: number[] = [];
-      const sleepStages = sleep.flatMap(session => session.stages || []);
-
-      const getStageValue = (value: number): number => {
-        switch (value) {
-          case SleepStageType.AWAKE: return 1;
-          case SleepStageType.LIGHT: return 2;
-          case SleepStageType.DEEP: return 3;
-          case SleepStageType.REM: return 4;
-          default: return 0;
-        }
-      };
-
-      sleepStages.forEach((stage) => {
-        const start = new Date(stage.startTime);
-        const hour = start.getHours();
-        const minute = String(start.getMinutes()).padStart(2, '0');
-        const ampm = hour >= 12 ? 'PM' : 'AM';
-        const displayHour = hour % 12 || 12;
-        labels.push(`${displayHour}:${minute} ${ampm}`);
-        const numericValue = getStageValue(stage.stage);
-        data.push(numericValue);
-      });
-
-      setSleepData({
-        labels,
-        datasets: [
-          {
-            data,
-            color: (opacity = 1) => `rgba(162, 89, 255, ${opacity})`,
-            strokeWidth: 0, // Remove line
-          },
-        ],
-      });
+      // setSleepData({
+      //   labels,
+      //   datasets: [
+      //     {
+      //       data,
+      //       color: (opacity = 1) => `rgba(162, 89, 255, ${opacity})`,
+      //       strokeWidth: 0, // Remove line
+      //     },
+      //   ],
+      // });
     };
 
     fetchHealthData();
@@ -175,11 +206,16 @@ export default function Home() {
     loadUserData();
   }, []);
 
+  const bpValue =
+    latestBloodPressure.systolic !== null && latestBloodPressure.diastolic !== null
+      ? `${latestBloodPressure.systolic}/${latestBloodPressure.diastolic}`
+      : 'N/A';
+
   const statBoxes = [
-    { label: exerSession, value: exerType, unit: '', icon: 'barbell-outline', color: '#ff8c42' },
-    { label: 'Total Steps Today', value: totalSteps, unit: '', icon: 'walk-outline', color: '#43e97b' },
-    { label: 'Hours of Sleep', value: totalSleepHours, unit: '', icon: 'moon-outline', color: '#5d3fd3' },
-    { label: 'Latest Heart Rate', value: latestHeartRate, unit: 'bpm', icon: 'heart-outline', color: '#ff4d6d' },
+    { label: 'Total Steps Today', value: totalSteps || 'N/A', unit: '', icon: 'walk-outline', color: '#43e97b' },
+    { label: 'Latest Heart Rate', value: latestHeartRate || 'N/A', unit: 'bpm', icon: 'heart-outline', color: '#ff4d6d' },
+    { label: 'Latest SpO2', value: latestSpO2 ?? 'N/A', unit: '%', icon: 'pulse-outline', color: '#4dd4ff' },
+    { label: 'Blood Pressure', value: bpValue, unit: 'mmHg', icon: 'medkit-outline', color: '#ff9f1c' },
   ];
 
   return (
@@ -200,65 +236,22 @@ export default function Home() {
       </View>
     
       <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
-        <View style={{ paddingHorizontal: 16 }}>
-        <Text style={{
-          color: 'skyblue',
-          fontSize: 18,
-          fontWeight: 'bold',
-          textAlign: 'center',
-          marginBottom: 8,
-        }}>
-          Sleep Stages Throughout the Night
-        </Text>
-      </View>
         {selectedTab === 'home' && (
           <>
-            {sleepData.labels.length > 0 && (
-              <ScrollView horizontal>
-                
-                <LineChart
-                  data={sleepData}
-                  width={Math.max(screenWidth, sleepData.labels.length * 60)}
-                  height={250}
-                  chartConfig={{
-                    backgroundColor: '#23234b',
-                    backgroundGradientFrom: '#23234b',
-                    backgroundGradientTo: '#1a1a2e',
-                    decimalPlaces: 0,
-                    color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-                    labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-                    propsForDots: {
-                      r: '6',
-                      strokeWidth: '2',
-                      stroke: '#a259ff',
-                    },
-                  }}
-                  withInnerLines={false}
-                  withOuterLines={false}
-                  withShadow={false}
-                  withVerticalLines={false}
-                  withHorizontalLabels={true}
-                  fromZero
-                  yLabelsOffset={20}
-                  yAxisLabel=""
-                  formatYLabel={(value) => {
-                    const stageNum = parseInt(value);
-                    switch (stageNum) {
-                      case 1: return 'AWAKE';
-                      case 2: return 'LIGHT';
-                      case 3: return 'DEEP';
-                      case 4: return 'REM';
-                      default: return '';
-                    }
-                  }}
-                  style={{
-                    marginVertical: 16,
-                    borderRadius: 16,
-                    alignSelf: 'center',
-                  }}
-                />
-              </ScrollView>
-            )}
+            <View style={styles.sleepSummaryCard}>
+              <Text style={styles.sectionTitle}>Sleep Goal</Text>
+              <View style={styles.sleepCircleRow}>
+                <View style={styles.sleepCircle}>
+                  <Text style={styles.sleepCircleValue}>{sleepHoursDisplay}</Text>
+                  <Text style={styles.sleepCircleLabel}>hrs slept</Text>
+                  <Text style={styles.sleepCircleTarget}>Goal: {sleepTargetHours} hrs</Text>
+                </View>
+              </View>
+              <View style={styles.sleepSummaryText}>
+                <Text style={styles.sleepStatus}>{sleepStatus}</Text>
+                <Text style={styles.sleepSubtext}>Based on your latest night.</Text>
+              </View>
+            </View>
 
             <View style={styles.statsBoxContainer}>
               {statBoxes.map((box, idx) => (
@@ -281,8 +274,8 @@ export default function Home() {
           </>
         )}
 
-        {selectedTab === 'recommendations' && <Tips />}
-        {selectedTab === 'diary' && <Diary />}
+        {selectedTab === 'sleepAnalysis' && <SleepAnalysis />}
+        {selectedTab === 'insights' && <Tips />}
         {selectedTab === 'profile' && <Profile />}
       </ScrollView>
 
@@ -294,15 +287,15 @@ export default function Home() {
             iconColor={selectedTab === 'home' ? '#a259ff' : '#fff'} 
             navName={<Text style={[styles.navText, selectedTab === 'home' && styles.navTextActive]}>Home</Text>} />
           <BottomNav 
-            onPress={() => setSelectedTab('recommendations')} 
-            icon={selectedTab === 'recommendations' ? 'bulb' : 'bulb-outline'} 
-            iconColor={selectedTab === 'recommendations' ? '#a259ff' : '#fff'} 
-            navName={<Text style={[styles.navText, selectedTab === 'recommendations' && styles.navTextActive]}>Tips</Text>} />
+            onPress={() => setSelectedTab('sleepAnalysis')} 
+            icon={selectedTab === 'sleepAnalysis' ? 'moon' : 'moon-outline'} 
+            iconColor={selectedTab === 'sleepAnalysis' ? '#a259ff' : '#fff'} 
+            navName={<Text style={[styles.navText, selectedTab === 'sleepAnalysis' && styles.navTextActive]}>Sleep Analysis</Text>} />
           <BottomNav 
-            onPress={() => setSelectedTab('diary')} 
-            icon={selectedTab === 'diary' ? 'journal' : 'journal-outline'} 
-            iconColor={selectedTab === 'diary' ? '#a259ff' : '#fff'} 
-            navName={<Text style={[styles.navText, selectedTab === 'diary' && styles.navTextActive]}>Diary</Text>} />
+            onPress={() => setSelectedTab('insights')} 
+            icon={selectedTab === 'insights' ? 'bulb' : 'bulb-outline'} 
+            iconColor={selectedTab === 'insights' ? '#a259ff' : '#fff'} 
+            navName={<Text style={[styles.navText, selectedTab === 'insights' && styles.navTextActive]}>Insights</Text>} />
           <BottomNav 
             onPress={() => setSelectedTab('profile')} 
             icon={selectedTab === 'profile' ? 'person' : 'person-outline'} 

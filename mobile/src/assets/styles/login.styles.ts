@@ -221,6 +221,22 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 17,
   },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    marginBottom: 14,
+    paddingHorizontal: 12,
+    height: 48,
+  },
+  inputIcon: {
+    fontSize: 20,
+    color: '#888',
+    marginRight: 8,
+  },
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',

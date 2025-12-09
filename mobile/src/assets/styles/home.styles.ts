@@ -70,6 +70,16 @@ export interface Styles {
   saveButtonText: TextStyle;
   syncButton: ViewStyle;
   syncButtonText: TextStyle;
+  sleepSummaryCard: ViewStyle;
+  sectionTitle: TextStyle;
+  sleepCircleRow: ViewStyle;
+  sleepCircle: ViewStyle;
+  sleepCircleValue: TextStyle;
+  sleepCircleLabel: TextStyle;
+  sleepCircleTarget: TextStyle;
+  sleepSummaryText: ViewStyle;
+  sleepStatus: TextStyle;
+  sleepSubtext: TextStyle;
 }
 
 const styles = StyleSheet.create<Styles>({
@@ -440,7 +450,70 @@ const styles = StyleSheet.create<Styles>({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
-  }
+  },
+  sleepSummaryCard: {
+    backgroundColor: '#1f1f3b',
+    marginHorizontal: 16,
+    marginTop: 8,
+    marginBottom: 16,
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.05)',
+  },
+  sectionTitle: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  sleepCircleRow: {
+    flexDirection: 'column',
+    alignItems: 'center',
+  },
+  sleepCircle: {
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    borderWidth: 10,
+    borderColor: 'rgba(162, 89, 255, 0.3)',
+    backgroundColor: 'rgba(162, 89, 255, 0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+  },
+  sleepCircleValue: {
+    color: '#fff',
+    fontSize: 32,
+    fontWeight: 'bold',
+  },
+  sleepCircleLabel: {
+    color: '#b8b8d0',
+    fontSize: 14,
+  },
+  sleepCircleTarget: {
+    color: '#9f9ff0',
+    fontSize: 14,
+    marginTop: 6,
+  },
+  sleepSummaryText: {
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 12,
+  },
+  sleepStatus: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  sleepSubtext: {
+    color: '#b8b8d0',
+    fontSize: 14,
+    lineHeight: 20,
+    textAlign: 'center',
+  },
 });
 
 export default styles; 
