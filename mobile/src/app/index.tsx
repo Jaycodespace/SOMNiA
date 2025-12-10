@@ -29,7 +29,8 @@ export default function LandingPage() {
 
           <View style={styles.buttonContainer}>
             <Pressable
-              onPress={() => router.push('/(auth)/login')}
+              onPress={() => router.push('/setupHealthPerm')}
+
               style={({ pressed }) => [styles.getStartedButton, pressed && styles.getStartedButtonPressed]}
             >
               <Text style={styles.getStartedButtonText}>Get Started</Text>

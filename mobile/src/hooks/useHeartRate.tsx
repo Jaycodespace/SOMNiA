@@ -3,10 +3,10 @@ import { requestPermission, readRecords } from 'react-native-health-connect';
 import { TimeRangeFilter } from 'react-native-health-connect/lib/typescript/types/base.types';
 
 export const useHeartRate = (date: Date) => {
-  const startDate = new Date(date); // Clone for start
+  const startDate = new Date(date);
   startDate.setHours(0, 0, 0, 0);
 
-  const endDate = new Date(date); // Clone for end
+  const endDate = new Date(date);
   endDate.setHours(23, 59, 59, 999);
 
   const timeRangeFilter: TimeRangeFilter = {
@@ -20,7 +20,11 @@ export const useHeartRate = (date: Date) => {
       { accessType: 'read', recordType: 'HeartRate' },
     ]);
 
-    if (!granted.some((p) => p.recordType === 'HeartRate')) {
+    const hasPermission = granted.some(
+      (p) => p.recordType === 'HeartRate'
+    );
+
+    if (!hasPermission) {
       throw new Error('Permission not granted for HeartRate');
     }
   }, []);
@@ -28,11 +32,11 @@ export const useHeartRate = (date: Date) => {
   const readHeartRate = useCallback(async () => {
     await requestHeartRate();
 
-    const { records } = await readRecords('HeartRate', {
-      timeRangeFilter,
-    });
+    const { records } = await readRecords('HeartRate', { timeRangeFilter });
 
-    //console.log('HeartRate records:', JSON.stringify(records, null, 2));
+    // Temporary console log for debugging
+    // console.log("Heart Rate Records:", JSON.stringify(records, null, 2));
+
     return records;
   }, [requestHeartRate, timeRangeFilter]);
 

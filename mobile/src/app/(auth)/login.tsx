@@ -7,6 +7,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import styles from '../../assets/styles/login.styles';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { useAuthStore } from '../../store/useAuthStore';
 
 export default function Login() {
     const [email, setEmail] = useState('');
@@ -18,7 +19,7 @@ export default function Login() {
     const router = useRouter();
 
     // Use localhost for web development
-    const backendUrl = 'http://192.168.1.8:4000';
+    const backendUrl = 'http://0.0.0.0:4000';
 
     const handleLogin = async () => {
         setIsLoading(true);
@@ -42,28 +43,23 @@ export default function Login() {
 
             // Handle successful login
             if (response.data.success) {
-                console.log('Login successful, response:', response.data);
-               
-                // Extract token from cookie
-                const token = response.headers['set-cookie']?.[0]?.split(';')[0]?.split('=')[1];
-                
+                const token = response.data.token;
+
                 if (token) {
-                    // Store auth data
-                    const authData = {
+                    useAuthStore.getState().setAuth({
                         token,
-                        timestamp: new Date().getTime(),
-                        isAuthenticated: true,
-                        email: email,
+                        userId: response.data.user_id,  // <-- your backend must return this
+                        email,
                         name: email.split('@')[0]
-                    };
-                    await AsyncStorage.setItem('authData', JSON.stringify(authData));
+                    });
                 }
 
                 Toast.show({
                     type: 'success',
                     text1: 'Login successful!',
                 });
-                router.replace('/home'); 
+
+                router.replace('/home');
             } else {
                 console.log('Login failed, response:', response.data);
                 Toast.show({

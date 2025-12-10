@@ -12,9 +12,9 @@ const spo2Schema = new mongoose.Schema({
   clientRecordId:       { type: String },   // metadata.clientRecordId
   clientRecordVersion:  { type: Number },   // metadata.clientRecordVersion
   dataOrigin:           { type: String },   // metadata.dataOrigin
-  recordingMethod:      { type: Number },   // metadata.recordingMethod
+  recordingMethod: { type: String, default: null },   // metadata.recordingMethod
 
-  device:               { type: mongoose.Schema.Types.Mixed }, // metadata.device
+  device: { type: String, default: null }, // metadata.device
 
   lastModifiedTime:     { type: Date, required: true }, // metadata.lastModifiedTime
 }, {

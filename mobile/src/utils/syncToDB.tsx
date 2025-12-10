@@ -1,7 +1,8 @@
 import { RecordResult } from "react-native-health-connect";
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuthStore } from '../store/useAuthStore';
 
-const backendUrl = 'http://192.168.147.110:4000';
+const backendUrl = 'http://0.0.0.0:4000';
 
 const handleResponse = async (response: Response, dataType: string) => {
     if (!response.ok) {
@@ -13,7 +14,11 @@ const handleResponse = async (response: Response, dataType: string) => {
 
 const getAuthToken = async () => {
     try {
-        const token = await AsyncStorage.getItem('token');
+        const { token, userId } = useAuthStore.getState();
+
+        if (!token || !userId) {
+            throw new Error("User not authenticated.");
+        }
         if (!token) {
             throw new Error('No authentication token found');
         }
@@ -29,10 +34,14 @@ export const syncToDB = async (
     heartRate: RecordResult<"HeartRate">[],
     sleepSession: RecordResult<"SleepSession">[],
     steps: RecordResult<"Steps">[],
-    userID: string
+    spo2: RecordResult<"OxygenSaturation">[]
 ) => {
     try {
         const token = await getAuthToken();
+        
+        // ✅ FIX — get userId here
+        const { userId } = useAuthStore.getState();
+
         const headers = {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${token}`
@@ -40,7 +49,7 @@ export const syncToDB = async (
 
         // Heart Rate
         const heartRatePayload = heartRate.map((record) => ({
-            userId: userID,
+            userId, // <-- FIXED
             id: record.metadata.id,
             lastModifiedTime: record.metadata.lastModifiedTime,
             startTime: record.startTime,
@@ -60,7 +69,7 @@ export const syncToDB = async (
 
         // Sleep Session
         const sleepPayload = sleepSession.map((record) => ({
-            userId: userID,
+            userId, // <-- FIXED
             id: record.metadata.id,
             lastModifiedTime: record.metadata.lastModifiedTime,
             startTime: record.startTime,
@@ -82,7 +91,7 @@ export const syncToDB = async (
 
         // Steps
         const stepsPayload = steps.map((record) => ({
-            userId: userID,
+            userId, // <-- FIXED
             id: record.metadata.id,
             lastModifiedTime: record.metadata.lastModifiedTime,
             startTime: record.startTime,
@@ -97,9 +106,37 @@ export const syncToDB = async (
         });
         await handleResponse(stepsResponse, "steps");
 
+        // ==========================
+        // SPO2 (Oxygen Saturation)
+        // ==========================
+        const spo2Payload = spo2.map((record) => ({
+            userId,
+            id: record.metadata.id,
+            percentage: record.percentage,
+            time: record.time,
+
+            // Optional metadata ONLY (HC does not provide device/recordingMethod)
+            clientRecordId: record.metadata.clientRecordId ?? null,
+            clientRecordVersion: record.metadata.clientRecordVersion ?? null,
+            dataOrigin: record.metadata.dataOrigin ?? null,
+
+            lastModifiedTime: record.metadata.lastModifiedTime
+        }));
+
+
+        await handleResponse(
+            await fetch(`${backendUrl}/api/spo2/addSpO2`, {
+                method: "POST",
+                headers,
+                body: JSON.stringify(spo2Payload),
+            }),
+            "SpO2"
+        );
+
         console.log("Health data synced successfully.");
     } catch (error) {
         console.error("Error syncing data:", error);
         throw error;
     }
 };
+
