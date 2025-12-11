@@ -1,0 +1,13 @@
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+}
+
+.custom-select {
+  color: white;
+  background-color: rgba(31, 41, 55, 0.4); 
+}
+
+.custom-select option {
+  background-color: white;
+  color: black;
+}

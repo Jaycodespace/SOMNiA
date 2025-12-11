@@ -1,26 +1,32 @@
-import React, { useState, useContext } from 'react';
-import { motion } from 'framer-motion';
-import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
-import { toast } from 'react-toastify';
-import { AppContext } from '../context/AppContext';
-import logo from '../assets/SOMNiA_LOGO.png';
+// src/pages/Register.jsx
+import "../../css/global.css"
+import React, { useState, useContext } from "react";
+import { motion } from "framer-motion";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import { AppContext } from "../context/AppContext";
+import logo from "../assets/SOMNiA_LOGO.png";
 import {
   UserIcon,
   EnvelopeIcon,
   LockClosedIcon,
   ClipboardDocumentCheckIcon,
-} from '@heroicons/react/24/outline';
+} from "@heroicons/react/24/outline";
+
 
 const Register = () => {
   const navigate = useNavigate();
   const { backendUrl } = useContext(AppContext);
   const [isLoading, setIsLoading] = useState(false);
+
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
+    name: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    birthdate: "",
+    gender: "",
   });
 
   const handleChange = (e) => {
@@ -29,81 +35,97 @@ const Register = () => {
 
   const onSubmitHandler = async (e) => {
     e.preventDefault();
+
     if (formData.password !== formData.confirmPassword) {
-      toast.error('Passwords do not match');
+      toast.error("Passwords do not match");
+      return;
+    }
+
+    if (!formData.birthdate) {
+      toast.error("Birthdate is required");
+      return;
+    }
+
+    if (!formData.gender) {
+      toast.error("Please select your gender");
       return;
     }
 
     try {
       setIsLoading(true);
       const { data } = await axios.post(
-        backendUrl + '/api/auth/register',
+        backendUrl + "/api/auth/register",
         {
           name: formData.name,
           email: formData.email,
           password: formData.password,
+          birthdate: formData.birthdate, // YYYY-MM-DD from input[type=date]
+          gender: formData.gender,
         },
         {
           withCredentials: true,
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
         }
       );
 
       if (data.success) {
-        toast.success('Registration successful! Redirecting to login...');
+        toast.success("Registration successful! Redirecting to login...");
         setTimeout(() => {
-          navigate('/login');
+          navigate("/login");
         }, 2000);
       } else {
-        toast.error(data.message || 'Registration failed. Please try again.');
+        toast.error(data.message || "Registration failed. Please try again.");
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || 'An error occurred during registration.');
+      toast.error(
+        error.response?.data?.message ||
+          "An error occurred during registration."
+      );
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#0A1628]">
+    <div className="min-h-screen flex items-start justify-center bg-[#0A1628] py-10 sm:py-16">
       {/* Gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-br from-blue-900/20 via-transparent to-gray-900/50" />
-      
+
       {/* Medical cross pattern */}
-      <div 
-        className="absolute inset-0 opacity-[0.03]" 
+      <div
+        className="absolute inset-0 opacity-[0.03]"
         style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0v60M60 30H0' stroke='%23fff' stroke-width='1'/%3E%3C/svg%3E")`,
-          backgroundSize: '30px 30px'
+          backgroundSize: "30px 30px",
         }}
       />
 
       {/* Radial gradient for depth */}
       <div className="absolute inset-0 bg-gradient-radial from-transparent via-transparent to-gray-900/80" />
-      
+
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="max-w-md w-full mx-4 relative z-10"
       >
-        <div className="bg-gray-900/40 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-800/50 p-6">
+        <div className="bg-gray-900/40 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-800/50 p-5 sm:p-7">
           {/* Logo and Title */}
-          <div className="text-center mb-6">
+          <div className="text-center mb-4 sm:mb-5">
             <motion.img
               initial={{ scale: 0.5, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ duration: 0.5 }}
               src={logo}
               alt="Somnia Logo"
-              className="w-16 h-16 mx-auto mb-3"
+              className="w-14 h-14 sm:w-16 sm:h-16 mx-auto mb-2"
             />
             <motion.h2
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="text-2xl font-light text-white mb-1"
+              className="text-xl sm:text-2xl font-light text-white mb-1"
             >
               Create Account
             </motion.h2>
@@ -111,9 +133,9 @@ const Register = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3 }}
-              className="text-gray-400 text-sm"
+              className="text-gray-400 text-xs sm:text-sm"
             >
-              Join SOMNiA's medical sleep analysis platform
+              Join SOMNiA&apos;s medical sleep analysis platform
             </motion.p>
           </div>
 
@@ -123,11 +145,11 @@ const Register = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
             onSubmit={onSubmitHandler}
-            className="space-y-4"
+            className="space-y-3"
           >
-            {/* Name Input */}
+            {/* Name */}
             <div>
-              <label className="block text-gray-300 text-sm font-medium mb-1">
+              <label className="block text-gray-300 text-xs sm:text-sm font-medium mb-1">
                 Full Name
               </label>
               <div className="relative">
@@ -144,9 +166,9 @@ const Register = () => {
               </div>
             </div>
 
-            {/* Email Input */}
+            {/* Email */}
             <div>
-              <label className="block text-gray-300 text-sm font-medium mb-1">
+              <label className="block text-gray-300 text-xs sm:text-sm font-medium mb-1">
                 Email Address
               </label>
               <div className="relative">
@@ -163,9 +185,48 @@ const Register = () => {
               </div>
             </div>
 
-            {/* Password Input */}
+            {/* Birthdate + Gender in a row on larger screens */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Birthdate */}
+              <div>
+                <label className="block text-gray-300 text-xs sm:text-sm font-medium mb-1">
+                  Birthdate
+                </label>
+                <input
+                  type="date"
+                  name="birthdate"
+                  value={formData.birthdate}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-3 py-2 bg-gray-800/30 border border-gray-700/50 rounded-lg text-white focus:outline-none focus:border-blue-500 transition-colors text-sm"
+                />
+              </div>
+
+              {/* Gender */}
+              <div>
+                <label className="block text-gray-300 text-xs sm:text-sm font-medium mb-1">
+                  Gender
+                </label>
+                <select
+                name="gender"
+                value={formData.gender}
+                onChange={handleChange}
+                required
+                className="w-full px-3 py-2 bg-gray-800/40 border border-gray-700/50 rounded-lg 
+                          text-white focus:outline-none focus:border-blue-500 transition-colors text-sm
+                          custom-select"
+              >
+                <option value="">Select your gender</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Prefer not to say">Prefer not to say</option>
+              </select>
+              </div>
+            </div>
+
+            {/* Password */}
             <div>
-              <label className="block text-gray-300 text-sm font-medium mb-1">
+              <label className="block text-gray-300 text-xs sm:text-sm font-medium mb-1">
                 Password
               </label>
               <div className="relative">
@@ -182,9 +243,9 @@ const Register = () => {
               </div>
             </div>
 
-            {/* Confirm Password Input */}
+            {/* Confirm Password */}
             <div>
-              <label className="block text-gray-300 text-sm font-medium mb-1">
+              <label className="block text-gray-300 text-xs sm:text-sm font-medium mb-1">
                 Confirm Password
               </label>
               <div className="relative">
@@ -201,7 +262,7 @@ const Register = () => {
               </div>
             </div>
 
-            {/* Terms and Conditions */}
+            {/* Terms */}
             <div className="flex items-start">
               <div className="flex items-center h-5">
                 <input
@@ -211,12 +272,12 @@ const Register = () => {
                 />
               </div>
               <div className="ml-3">
-                <label className="text-xs text-gray-400">
-                  I agree to the{' '}
+                <label className="text-[11px] sm:text-xs text-gray-400">
+                  I agree to the{" "}
                   <a href="#" className="text-blue-400 hover:text-blue-300">
                     Terms of Service
-                  </a>{' '}
-                  and{' '}
+                  </a>{" "}
+                  and{" "}
                   <a href="#" className="text-blue-400 hover:text-blue-300">
                     Privacy Policy
                   </a>
@@ -224,7 +285,7 @@ const Register = () => {
               </div>
             </div>
 
-            {/* Submit Button */}
+            {/* Submit */}
             <button
               type="submit"
               disabled={isLoading}
@@ -240,13 +301,13 @@ const Register = () => {
               )}
             </button>
 
-            {/* Login Link */}
+            {/* Login link */}
             <div className="text-center">
-              <p className="text-gray-400 text-sm">
-                Already have an account?{' '}
+              <p className="text-gray-400 text-xs sm:text-sm">
+                Already have an account?{" "}
                 <button
                   type="button"
-                  onClick={() => navigate('/login')}
+                  onClick={() => navigate("/login")}
                   className="text-blue-400 hover:text-blue-300"
                 >
                   Sign in

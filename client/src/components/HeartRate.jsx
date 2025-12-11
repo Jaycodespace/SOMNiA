@@ -24,27 +24,18 @@ const HeartRate = () => {
     try {
       setLoading(true);
       setError(null);
-      
-      console.log('Fetching heart rate data from:', `${backendUrl}/api/heartrate/stats`);
-      
+
       const response = await axios.get(`${backendUrl}/api/heartrate/stats`, {
         withCredentials: true,
-        timeout: 10000 
+        timeout: 10000,
       });
-      
-      console.log('Heart rate API response:', response.data);
-      
+
       if (response.data.success) {
-        console.log('Setting heart rate data:', response.data.data);
         setHeartRateData(response.data.data);
       } else {
-        console.log('API returned success: false');
         setError('Failed to fetch heart rate data');
       }
     } catch (err) {
-      console.error('Error fetching heart rate data:', err);
-      console.log('Error response:', err.response?.data);
-      
       if (err.code === 'ECONNABORTED') {
         setError('Request timed out');
       } else if (err.response?.status === 401) {
@@ -61,43 +52,42 @@ const HeartRate = () => {
 
   useEffect(() => {
     fetchHeartRateData();
-
-    // Set up automatic refresh every 5 minutes
-    const interval = setInterval(() => {
-      fetchHeartRateData();
-    }, 5 * 60 * 1000);
-
+    const interval = setInterval(fetchHeartRateData, 5 * 60 * 1000);
     return () => clearInterval(interval);
-  }, [backendUrl]); // Add backendUrl as dependency
+  }, [backendUrl]);
 
+  // ------------------ LOADING ------------------
   if (loading && !heartRateData.latestHeartRate) {
     return (
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-gray-900/95 rounded-2xl p-6 border border-gray-800/50 backdrop-blur-xl animate-pulse"
+        className="w-full max-w-xl mx-auto bg-gray-900/95 rounded-2xl 
+                   p-4 sm:p-6 border border-gray-800/50 backdrop-blur-xl animate-pulse"
       >
-        <div className="flex items-start justify-between">
+        <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
           <div className="w-12 h-12 bg-gray-700/50 rounded-xl"></div>
           <div className="w-20 h-8 bg-gray-700/50 rounded-full"></div>
         </div>
-        <div className="mt-4">
-          <div className="w-24 h-4 bg-gray-700/50 rounded mb-2"></div>
-          <div className="w-16 h-8 bg-gray-700/50 rounded mb-1"></div>
+        <div className="mt-4 space-y-2">
+          <div className="w-24 h-4 bg-gray-700/50 rounded"></div>
+          <div className="w-16 h-8 bg-gray-700/50 rounded"></div>
           <div className="w-32 h-3 bg-gray-700/50 rounded"></div>
         </div>
       </motion.div>
     );
   }
 
+  // ------------------ ERROR ------------------
   if (error && !heartRateData.latestHeartRate) {
     return (
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-gray-900/95 rounded-2xl p-6 border border-red-800/50 backdrop-blur-xl"
+        className="w-full max-w-xl mx-auto bg-gray-900/95 rounded-2xl 
+                   p-4 sm:p-6 border border-red-800/50 backdrop-blur-xl"
       >
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start justify-between gap-3">
           <div className="flex items-center space-x-3">
             <HeartIcon className="w-6 h-6 text-red-400" />
             <div>
@@ -110,29 +100,51 @@ const HeartRate = () => {
     );
   }
 
+  // ------------------ MAIN CARD ------------------
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-gray-900/95 rounded-2xl p-6 border border-gray-800/50 backdrop-blur-xl"
+      className="w-full max-w-xl mx-auto bg-gray-900/95 rounded-2xl 
+                 p-4 sm:p-6 border border-gray-800/50 backdrop-blur-xl"
     >
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
         <div className="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center">
           <HeartIcon className="w-6 h-6 text-blue-400" />
         </div>
+
+        {heartRateData.trend !== 'neutral' && (
+          <div
+            className={`inline-flex items-center ${
+              heartRateData.trend === 'up' ? 'text-green-500' : 'text-red-500'
+            } bg-gray-900/50 px-2.5 sm:px-3 py-1.5 rounded-full text-xs sm:text-sm`}
+          >
+            {heartRateData.trend === 'up' ? (
+              <ArrowTrendingUpIcon className="w-4 h-4 mr-1" />
+            ) : (
+              <ArrowTrendingDownIcon className="w-4 h-4 mr-1" />
+            )}
+            <span className="font-medium">{heartRateData.trendValue}</span>
+          </div>
+        )}
       </div>
-      
+
       <div className="mt-4">
-        <div className="text-gray-400 text-sm mb-1">Latest Heart Rate</div>
-        <div className="text-2xl text-white font-light">
+        <div className="text-gray-400 text-xs sm:text-sm mb-1">Latest Heart Rate</div>
+        <div className="text-2xl sm:text-3xl text-white font-light">
           {heartRateData.latestHeartRate} bpm
         </div>
+
         {heartRateData.trendLabel && (
-          <div className="text-sm text-gray-400 mt-1">{heartRateData.trendLabel}</div>
+          <div className="text-xs sm:text-sm text-gray-400 mt-1">
+            {heartRateData.trendLabel}
+          </div>
         )}
+
         {heartRateData.latestTimestamp && (
-          <div className="text-xs text-gray-500 mt-2">
-            Recorded: {new Date(heartRateData.latestTimestamp).toLocaleString('en-US', {
+          <div className="text-[11px] sm:text-xs text-gray-500 mt-2">
+            Recorded:{' '}
+            {new Date(heartRateData.latestTimestamp).toLocaleString('en-US', {
               month: 'short',
               day: 'numeric',
               hour: 'numeric',

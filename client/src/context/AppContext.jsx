@@ -1,6 +1,7 @@
+// src/context/AppContext.jsx
 import { createContext, useState, useEffect } from "react";
-import axios from 'axios';
-import { toast } from 'react-toastify';
+import axios from "axios";
+import { toast } from "react-toastify";
 
 // Set axios defaults once
 axios.defaults.withCredentials = true;
@@ -8,15 +9,23 @@ axios.defaults.withCredentials = true;
 export const AppContext = createContext();
 
 export const AppContextProvider = (props) => {
-  const backendUrl = import.meta.env.VITE_BACKEND_URL;
+  const backendUrl =
+    import.meta.env.VITE_BACKEND_URL || "http://localhost:4000";
+
   const [isLoggedin, setIsLoggedin] = useState(false);
   const [userData, setUserData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
+  /**
+   * 1) Check if user is authenticated
+   * 2) If yes, fetch user data (/api/user/data)
+   * Returns true/false for success.
+   */
   const checkAuthAndGetUserData = async (showErrors = true) => {
     try {
       setIsLoading(true);
-      
+
+      // 1. Check auth
       const { data: authData } = await axios.get(
         `${backendUrl}/api/auth/is-auth`,
         { withCredentials: true }
@@ -28,6 +37,7 @@ export const AppContextProvider = (props) => {
         return false;
       }
 
+      // 2. Get user data
       const { data: userResponse } = await axios.get(
         `${backendUrl}/api/user/data`,
         { withCredentials: true }
@@ -41,16 +51,18 @@ export const AppContextProvider = (props) => {
         setIsLoggedin(false);
         setUserData(null);
         if (showErrors) {
-          toast.error('Failed to get user data');
+          toast.error(userResponse.message || "Failed to get user data");
         }
         return false;
       }
     } catch (error) {
       setIsLoggedin(false);
       setUserData(null);
-      
+
       if (showErrors && error.response?.status !== 401) {
-        toast.error(error.response?.data?.message || 'Authentication check failed');
+        toast.error(
+          error.response?.data?.message || "Authentication check failed"
+        );
       }
       return false;
     } finally {
@@ -58,26 +70,43 @@ export const AppContextProvider = (props) => {
     }
   };
 
+  /**
+   * Convenience wrapper if you just want to refresh user data after an action
+   * (e.g. after email verification) and don't care about toasts.
+   */
+  const refreshUserData = async () => {
+    return checkAuthAndGetUserData(false);
+  };
+
   const logout = async () => {
     try {
-      const { data } = await axios.post(`${backendUrl}/api/auth/logout`, {}, { 
-        withCredentials: true 
-      });
-      
+      const { data } = await axios.post(
+        `${backendUrl}/api/auth/logout`,
+        {},
+        {
+          withCredentials: true,
+        }
+      );
+
       if (data.success) {
         setIsLoggedin(false);
         setUserData(null);
         localStorage.clear();
         sessionStorage.clear();
-        window.location.replace('/');
+        window.location.replace("/");
         return true;
       }
       return false;
     } catch (error) {
-      toast.error('Logout failed');
+      toast.error("Logout failed");
       return false;
     }
   };
+
+  // Initial auth + user load on app mount
+  useEffect(() => {
+    checkAuthAndGetUserData(false);
+  }, [backendUrl]);
 
   const value = {
     backendUrl,
@@ -87,7 +116,8 @@ export const AppContextProvider = (props) => {
     setUserData,
     isLoading,
     checkAuthAndGetUserData,
-    logout
+    refreshUserData, // <- use this after verify
+    logout,
   };
 
   return (

@@ -22,26 +22,23 @@ const NavigationBar = () => {
   axios.defaults.withCredentials = true;
 
   const scrollToSection = (sectionId) => {
-    // If not on home page, navigate to home first
     if (location.pathname !== '/') {
       navigate('/');
-      // Wait for navigation to complete before scrolling
       setTimeout(() => {
         const element = document.getElementById(sectionId);
         if (element) {
-          element.scrollIntoView({ 
+          element.scrollIntoView({
             behavior: 'smooth',
-            block: 'start'
+            block: 'start',
           });
         }
       }, 100);
     } else {
-      // If already on home page, just scroll
       const element = document.getElementById(sectionId);
       if (element) {
-        element.scrollIntoView({ 
+        element.scrollIntoView({
           behavior: 'smooth',
-          block: 'start'
+          block: 'start',
         });
       }
     }
@@ -66,23 +63,22 @@ const NavigationBar = () => {
     await logout();
   };
 
-  // Render auth buttons when not logged in
   const renderAuthButtons = () => {
     if (isLoggedin) {
       return null;
     }
 
     return (
-      <div className="flex items-center space-x-4">
+      <div className="flex items-center space-x-2 sm:space-x-4">
         <button
           onClick={() => navigate('/login')}
-          className="text-white hover:text-blue-400 transition-colors text-sm"
+          className="text-xs sm:text-sm text-white hover:text-blue-400 transition-colors"
         >
           Sign In
         </button>
         <button
           onClick={() => navigate('/register')}
-          className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm transition-colors"
+          className="bg-blue-500 hover:bg-blue-600 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm transition-colors"
         >
           Sign Up
         </button>
@@ -90,7 +86,6 @@ const NavigationBar = () => {
     );
   };
 
-  // Only render user menu if actually logged in
   const renderUserMenu = () => {
     if (!isLoggedin || !userData) {
       return null;
@@ -98,11 +93,11 @@ const NavigationBar = () => {
 
     return (
       <Menu as="div" className="relative">
-        <Menu.Button className="flex items-center space-x-3 text-white hover:text-gray-200 transition-colors">
+        <Menu.Button className="flex items-center space-x-2 sm:space-x-3 text-white hover:text-gray-200 transition-colors">
           <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-600 to-blue-400 flex items-center justify-center text-sm">
             {userData.name?.charAt(0)}
           </div>
-          <span className="text-sm">{userData.name}</span>
+          <span className="hidden sm:inline text-sm">{userData.name}</span>
         </Menu.Button>
 
         <Transition
@@ -116,7 +111,7 @@ const NavigationBar = () => {
         >
           <Menu.Items className="absolute right-0 mt-2 w-56 rounded-lg bg-gray-900/90 backdrop-blur-xl shadow-lg ring-1 ring-gray-800/50 divide-y divide-gray-800/50">
             <div className="px-4 py-3">
-              <p className="text-sm text-gray-400">Signed in as</p>
+              <p className="text-xs text-gray-400">Signed in as</p>
               <p className="text-sm text-white truncate">{userData.email}</p>
             </div>
 
@@ -136,7 +131,7 @@ const NavigationBar = () => {
                   )}
                 </MenuItem>
               )}
-              
+
               <MenuItem>
                 {({ isActive }) => (
                   <button
@@ -186,35 +181,38 @@ const NavigationBar = () => {
   };
 
   return (
-    <div className="w-full fixed top-0 bg-gray-900/40 backdrop-blur-xl border-b border-gray-800/50 h-16 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
-        <div className="flex justify-between items-center h-full">
+    <div className="w-full fixed top-0 left-0 bg-gray-900/70 backdrop-blur-xl border-b border-gray-800/50 z-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Top row */}
+        <div className="flex justify-between items-center h-14 sm:h-16">
           {/* Logo and Brand */}
-          <button 
+          <button
             onClick={() => scrollToSection('hero-section')}
             className="flex items-center space-x-2 hover:opacity-80 transition-opacity"
           >
-            <img src={logo} alt="SOMNiA" className="h-10 w-10" />
-            <span className="text-2xl font-light text-white tracking-wider">SOMNiA</span>
+            <img src={logo} alt="SOMNiA" className="h-8 w-8 sm:h-10 sm:w-10" />
+            <span className="text-xl sm:text-2xl font-light text-white tracking-wider">
+              SOMNiA
+            </span>
           </button>
 
-          {/* Center Navigation */}
+          {/* Center Navigation - desktop */}
           <div className="hidden md:flex items-center space-x-8">
-            <button 
+            <button
               onClick={() => scrollToSection('hero-section')}
               className="flex items-center space-x-2 text-gray-300 hover:text-white transition-colors text-sm"
             >
               <HomeIcon className="w-5 h-5" />
               <span>Home</span>
             </button>
-            <button 
+            <button
               onClick={() => scrollToSection('how-it-works')}
               className="flex items-center space-x-2 text-gray-300 hover:text-white transition-colors text-sm"
             >
               <InformationCircleIcon className="w-5 h-5" />
               <span>About</span>
             </button>
-            <button 
+            <button
               onClick={() => scrollToSection('why-choose')}
               className="flex items-center space-x-2 text-gray-300 hover:text-white transition-colors text-sm"
             >
@@ -224,10 +222,45 @@ const NavigationBar = () => {
           </div>
 
           {/* Right Side Actions */}
-          <div className="flex items-center space-x-6">
+          <div className="flex items-center space-x-3 sm:space-x-6">
             {renderAuthButtons()}
             {renderUserMenu()}
           </div>
+        </div>
+
+        {/* Mobile navigation dropdown */}
+        <div className="md:hidden pb-2">
+          <details className="group">
+            <summary className="flex items-center justify-between text-gray-300 text-xs sm:text-sm cursor-pointer select-none">
+              <span>Menu</span>
+              <span className="ml-2 transition-transform group-open:rotate-180">
+                ▾
+              </span>
+            </summary>
+            <div className="mt-2 bg-gray-900/90 border border-gray-800/60 rounded-lg p-3 space-y-2">
+              <button
+                onClick={() => scrollToSection('hero-section')}
+                className="flex items-center space-x-2 w-full text-left text-gray-300 hover:text-white text-sm py-1"
+              >
+                <HomeIcon className="w-5 h-5" />
+                <span>Home</span>
+              </button>
+              <button
+                onClick={() => scrollToSection('how-it-works')}
+                className="flex items-center space-x-2 w-full text-left text-gray-300 hover:text-white text-sm py-1"
+              >
+                <InformationCircleIcon className="w-5 h-5" />
+                <span>About</span>
+              </button>
+              <button
+                onClick={() => scrollToSection('why-choose')}
+                className="flex items-center space-x-2 w-full text-left text-gray-300 hover:text-white text-sm py-1"
+              >
+                <BuildingOfficeIcon className="w-5 h-5" />
+                <span>Services</span>
+              </button>
+            </div>
+          </details>
         </div>
       </div>
     </div>
