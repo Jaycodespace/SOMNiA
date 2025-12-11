@@ -49,10 +49,12 @@
           "android": {
             "compileSdkVersion": 35,
             "targetSdkVersion": 35,
-            "minSdkVersion": 26
+            "minSdkVersion": 26,
+            "kotlinVersion": "2.2.20"
           }
         }
       ],
+      "expo-health-connect",
       "expo-font"
     ],
     "extra": {
@@ -60,9 +62,9 @@
         "origin": false
       },
       "eas": {
-        "projectId": "126a43ca-b19a-4511-9039-79a36a36b59f"
+        "projectId": "24ad4c1a-ea5e-4b04-ba1b-316f85ce9a43"
       }
     },
-    "owner": "esco777"
+    "owner": "somnia_boy"
   }
 }
