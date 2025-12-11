@@ -4,61 +4,62 @@ import SpO2 from '../models/spo2Model.js';
 // Add SpO2 data
 // =============================
 export const addSpO2Data = async (req, res) => {
-  const {
-    percentage,
-    time,
-    id,
-    clientRecordId,
-    clientRecordVersion,
-    dataOrigin,
-    recordingMethod,
-    device,
-    lastModifiedTime
-  } = req.body;
-
-  const userId = req.body.userId;
-
-  // Required fields
-  if (
-    percentage === undefined ||
-    !time ||
-    !id ||
-    !lastModifiedTime
-  ) {
-    return res.status(400).json({
-      success: false,
-      message: 'Missing required SpO2 details'
-    });
-  }
+  const payload = Array.isArray(req.body) ? req.body : [req.body];
 
   try {
-    // Check duplicate using metadata.id
-    const existing = await SpO2.findOne({ id });
+    const results = [];
 
-    if (existing) {
-      return res.status(400).json({
-        success: false,
-        message: 'SpO2 data with this ID already exists'
+    for (const record of payload) {
+      const {
+        percentage,
+        time,
+        id,
+        clientRecordId,
+        clientRecordVersion,
+        dataOrigin,
+        lastModifiedTime,
+        userId
+      } = record;
+
+      // Required fields check
+      if (
+        percentage === undefined ||
+        !time ||
+        !id ||
+        !lastModifiedTime
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: 'Missing required SpO2 details'
+        });
+      }
+
+      // Duplicate prevention
+      const existing = await SpO2.findOne({ id });
+      if (existing) {
+        continue; // skip duplicate
+      }
+
+      const spo2Data = new SpO2({
+        user: userId,
+        percentage,
+        time: new Date(time),
+        id,
+        clientRecordId,
+        clientRecordVersion,
+        dataOrigin,
+        recordingMethod: null,
+        device: null,
+        lastModifiedTime: new Date(lastModifiedTime)
       });
+
+      await spo2Data.save();
+      results.push(spo2Data);
     }
-
-    const spo2Data = new SpO2({
-      user: userId,
-      percentage,
-      time: new Date(time),
-      id,
-      clientRecordId,
-      clientRecordVersion,
-      dataOrigin,
-      recordingMethod,
-      device,
-      lastModifiedTime: new Date(lastModifiedTime)
-    });
-
-    await spo2Data.save();
 
     return res.status(201).json({
       success: true,
+      inserted: results.length,
       message: 'SpO2 data added successfully'
     });
 

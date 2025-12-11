@@ -26,7 +26,7 @@ const Step = () => {
     try {
       setLoading(true);
       setError(null);
-    console.log('Fetching sleep data from:', `${backendUrl}/api/sleepSession/stats`);
+      console.log('Fetching sleep data from:', `${backendUrl}/api/sleepSession/stats`);
       const response = await axios.get(`${backendUrl}/api/step/stats`, {
         withCredentials: true,
         timeout: 10000,
@@ -40,9 +40,8 @@ const Step = () => {
         let trendLabel = 'No trend data';
 
         if (data.recordCount > 1) {
-          
-          const todaySteps = data.totalSteps;  
-          const yesterdaySteps = data.previousAverageSteps || 0;  
+          const todaySteps = data.totalSteps;
+          const yesterdaySteps = data.previousAverageSteps || 0;
 
           const difference = todaySteps - yesterdaySteps;
           if (difference > 0) {
@@ -100,15 +99,15 @@ const Step = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-gray-900/95 rounded-2xl p-6 border border-gray-800/50 backdrop-blur-xl animate-pulse"
+        className="w-full max-w-xl mx-auto bg-gray-900/95 rounded-2xl p-4 sm:p-6 border border-gray-800/50 backdrop-blur-xl animate-pulse"
       >
-        <div className="flex items-start justify-between">
+        <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
           <div className="w-12 h-12 bg-gray-700/50 rounded-xl"></div>
-          <div className="w-20 h-8 bg-gray-700/50 rounded-full"></div>
+          <div className="w-20 h-8 bg-gray-700/50 rounded-full self-end sm:self-auto"></div>
         </div>
-        <div className="mt-4">
-          <div className="w-24 h-4 bg-gray-700/50 rounded mb-2"></div>
-          <div className="w-16 h-8 bg-gray-700/50 rounded mb-1"></div>
+        <div className="mt-4 space-y-2">
+          <div className="w-24 h-4 bg-gray-700/50 rounded"></div>
+          <div className="w-16 h-8 bg-gray-700/50 rounded"></div>
           <div className="w-32 h-3 bg-gray-700/50 rounded"></div>
         </div>
       </motion.div>
@@ -120,9 +119,9 @@ const Step = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-gray-900/95 rounded-2xl p-6 border border-red-800/50 backdrop-blur-xl"
+        className="w-full max-w-xl mx-auto bg-gray-900/95 rounded-2xl p-4 sm:p-6 border border-red-800/50 backdrop-blur-xl"
       >
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div className="flex items-center space-x-3">
             <CursorArrowRaysIcon className="w-6 h-6 text-red-400" />
             <div>
@@ -133,7 +132,7 @@ const Step = () => {
           <button
             onClick={handleRefresh}
             disabled={loading}
-            className="p-2 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-gray-800/50"
+            className="p-2 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-gray-800/50 self-end sm:self-auto"
           >
             <ArrowPathIcon className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           </button>
@@ -146,25 +145,40 @@ const Step = () => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-gray-900/95 rounded-2xl p-6 border border-gray-800/50 backdrop-blur-xl"
+      className="w-full max-w-xl mx-auto bg-gray-900/95 rounded-2xl p-4 sm:p-6 border border-gray-800/50 backdrop-blur-xl"
     >
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
         <div className="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center">
           <Footprints className="w-6 h-6 text-blue-400" />
-
         </div>
-        
+
+        {/* Trend pill aligned with SleepSession style */}
+        <div className="flex items-center sm:justify-end w-full">
+          {stepData.trend !== 'neutral' && (
+            <div
+              className={`inline-flex items-center ${
+                stepData.trend === 'up' ? 'text-green-500' : 'text-red-500'
+              } bg-gray-900/50 px-2.5 sm:px-3 py-1.5 rounded-full text-xs sm:text-sm`}
+            >
+              <span className="font-medium">{stepData.trendValue}</span>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="mt-4">
-        <div className="text-gray-400 text-sm mb-1">Total Steps</div>
-        <div className="text-2xl text-white font-light">{stepData.totalSteps} steps</div>
-        <div className="text-sm text-gray-400 mt-1">Average: {stepData.averageSteps} steps</div>
+        <div className="text-gray-400 text-xs sm:text-sm mb-1">Total Steps</div>
+        <div className="text-2xl sm:text-3xl text-white font-light">
+          {stepData.totalSteps} steps
+        </div>
+        <div className="text-xs sm:text-sm text-gray-400 mt-1">
+          Average: {stepData.averageSteps} steps
+        </div>
         {stepData.trendLabel && (
-          <div className="text-sm text-gray-400 mt-1">{stepData.trendLabel}</div>
+          <div className="text-xs sm:text-sm text-gray-400 mt-1">
+            {stepData.trendLabel}
+          </div>
         )}
-        
-        
       </div>
     </motion.div>
   );

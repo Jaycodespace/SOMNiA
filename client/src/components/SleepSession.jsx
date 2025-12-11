@@ -108,7 +108,6 @@ const SleepSession = () => {
     }
     
     // Otherwise, assume the current data represents the latest session
-    // (You might want to modify this logic based on your actual API structure)
     const sessionMinutes = data.totalSleepMinutes || 0;
     
     return {
@@ -202,15 +201,15 @@ const SleepSession = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-gray-900/95 rounded-2xl p-6 border border-gray-800/50 backdrop-blur-xl animate-pulse"
+        className="w-full max-w-xl mx-auto bg-gray-900/95 rounded-2xl p-4 sm:p-6 border border-gray-800/50 backdrop-blur-xl animate-pulse"
       >
-        <div className="flex items-start justify-between">
+        <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
           <div className="w-12 h-12 bg-gray-700/50 rounded-xl"></div>
-          <div className="w-20 h-8 bg-gray-700/50 rounded-full"></div>
+          <div className="w-20 h-8 bg-gray-700/50 rounded-full self-end sm:self-auto"></div>
         </div>
-        <div className="mt-4">
-          <div className="w-24 h-4 bg-gray-700/50 rounded mb-2"></div>
-          <div className="w-16 h-8 bg-gray-700/50 rounded mb-1"></div>
+        <div className="mt-4 space-y-2">
+          <div className="w-24 h-4 bg-gray-700/50 rounded"></div>
+          <div className="w-16 h-8 bg-gray-700/50 rounded"></div>
           <div className="w-32 h-3 bg-gray-700/50 rounded"></div>
         </div>
       </motion.div>
@@ -222,9 +221,9 @@ const SleepSession = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-gray-900/95 rounded-2xl p-6 border border-red-800/50 backdrop-blur-xl"
+        className="w-full max-w-xl mx-auto bg-gray-900/95 rounded-2xl p-4 sm:p-6 border border-red-800/50 backdrop-blur-xl"
       >
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start justify-between gap-3">
           <div className="flex items-center space-x-3">
             <ClockIcon className="w-6 h-6 text-blue-400" />
             <div>
@@ -241,39 +240,46 @@ const SleepSession = () => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-gray-900/95 rounded-2xl p-6 border border-gray-800/50 backdrop-blur-xl"
+      className="w-full max-w-xl mx-auto bg-gray-900/95 rounded-2xl p-4 sm:p-6 border border-gray-800/50 backdrop-blur-xl"
     >
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
         <div className="w-12 h-12 bg-purple-500/10 rounded-xl flex items-center justify-center">
           <ClockIcon className="w-6 h-6 text-blue-400" />
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center sm:justify-end w-full">
           {sleepData.trend !== 'neutral' && (
-            <div className={`flex items-center ${
-              sleepData.trend === 'up' ? 'text-green-500' : 'text-red-500'
-            } bg-gray-900/50 px-3 py-1.5 rounded-full`}>
+            <div
+              className={`inline-flex items-center ${
+                sleepData.trend === 'up' ? 'text-green-500' : 'text-red-500'
+              } bg-gray-900/50 px-2.5 sm:px-3 py-1.5 rounded-full text-xs sm:text-sm`}
+            >
               {sleepData.trend === 'up' ? (
                 <ArrowTrendingUpIcon className="w-4 h-4 mr-1" />
               ) : (
                 <ArrowTrendingDownIcon className="w-4 h-4 mr-1" />
               )}
-              <span className="text-sm font-medium">{sleepData.trendValue}</span>
+              <span className="font-medium">{sleepData.trendValue}</span>
             </div>
           )}
         </div>
       </div>
       
       <div className="mt-4">
-        <div className="text-gray-400 text-sm mb-1">Latest Sleep Session Duration</div>
-        <div className="text-2xl text-white font-light">
+        <div className="text-gray-400 text-xs sm:text-sm mb-1">
+          Latest Sleep Session Duration
+        </div>
+        <div className="text-2xl sm:text-3xl text-white font-light">
           {formatSleepDuration(sleepData.latestSessionMinutes)}
         </div>
         {sleepData.trendLabel && (
-          <div className="text-sm text-gray-400 mt-1">{sleepData.trendLabel}</div>
+          <div className="text-xs sm:text-sm text-gray-400 mt-1">
+            {sleepData.trendLabel}
+          </div>
         )}
         {sleepData.sessionStartTime && (
-          <div className="text-xs text-gray-500 mt-2">
-            Start: {sleepData.sessionStartTime.toLocaleDateString('en-US', { 
+          <div className="text-[11px] sm:text-xs text-gray-500 mt-2">
+            Start:{' '}
+            {sleepData.sessionStartTime.toLocaleDateString('en-US', { 
               month: 'short', 
               day: 'numeric',
               hour: 'numeric',
@@ -283,8 +289,9 @@ const SleepSession = () => {
           </div>
         )}
         {sleepData.sessionEndTime && (
-          <div className="text-xs text-gray-500 mt-1">
-            End: {sleepData.sessionEndTime.toLocaleDateString('en-US', { 
+          <div className="text-[11px] sm:text-xs text-gray-500 mt-1">
+            End:{' '}
+            {sleepData.sessionEndTime.toLocaleDateString('en-US', { 
               month: 'short', 
               day: 'numeric',
               hour: 'numeric',
