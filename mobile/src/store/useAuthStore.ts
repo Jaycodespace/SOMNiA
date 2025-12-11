@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface AuthState {
   token: string | null;
@@ -47,6 +48,7 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'auth-store',
+      storage: createJSONStorage(() => AsyncStorage),
     }
   )
 );

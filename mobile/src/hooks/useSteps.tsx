@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { requestPermission, readRecords } from 'react-native-health-connect';
+import { requestPermission, readRecords, getGrantedPermissions } from 'react-native-health-connect';
 import { TimeRangeFilter } from 'react-native-health-connect/lib/typescript/types/base.types';
 
 export const useSteps = (date: Date) => {
@@ -16,24 +16,46 @@ export const useSteps = (date: Date) => {
   };
 
   const requestSteps = useCallback(async () => {
-    const granted = await requestPermission([
-      { accessType: 'read', recordType: 'Steps' },
-    ]);
+    // First check if permission is already granted
+    try {
+      const granted = await getGrantedPermissions();
+      if (granted.some((p) => p.recordType === 'Steps')) {
+        return true; // Permission already granted, no need to request
+      }
+    } catch (err) {
+      // If check fails, try requesting permission
+    }
 
-    if (!granted.some((p) => p.recordType === 'Steps')) {
-      throw new Error('Permission not granted for Steps');
+    // Only request if not already granted
+    try {
+      const granted = await requestPermission([
+        { accessType: 'read', recordType: 'Steps' },
+      ]);
+
+      return granted.some((p) => p.recordType === 'Steps');
+    } catch (err) {
+      // Permission denied or error - return false silently
+      return false;
     }
   }, []);
 
   const readSteps = useCallback(async () => {
-    await requestSteps();
+    const hasPermission = await requestSteps();
+    
+    if (!hasPermission) {
+      // Return empty array if no permission instead of throwing error
+      return [];
+    }
 
-    const { records } = await readRecords('Steps', {
-      timeRangeFilter,
-    });
-
-    //console.log('Steps records:', JSON.stringify(records, null, 2));
-    return records;
+    try {
+      const { records } = await readRecords('Steps', {
+        timeRangeFilter,
+      });
+      return records;
+    } catch (err) {
+      // Return empty array on error instead of throwing
+      return [];
+    }
   }, [requestSteps, timeRangeFilter]);
 
   return {

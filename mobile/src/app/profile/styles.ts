@@ -125,6 +125,32 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginLeft: 8,
   },
+  // Screen styles (for sub-screens)
+  screenContainer: {
+    flex: 1,
+    backgroundColor: '#1a1a2e',
+  },
+  screenHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 16,
+  },
+  backButton: {
+    marginRight: 12,
+    padding: 8,
+  },
+  screenTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#fff',
+    flex: 1,
+  },
+  screenContent: {
+    paddingBottom: 40,
+  },
 });
 
 export default styles;
+

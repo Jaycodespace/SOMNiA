@@ -1,6 +1,11 @@
 import { View, Text, TouchableOpacity } from 'react-native';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
+import { useExerciseSession } from '../hooks/useExerciseSession';
+import { useHeartRate } from '../hooks/useHeartRate';
+import { useSleepSession } from '../hooks/useSleepSession';
+import { useSteps } from '../hooks/useSteps';
+import { useOxygenSaturation } from '../hooks/useSpo2';
 import styles from '../assets/styles/sleepAnalysis.styles';
 
 type Prediction = {
@@ -12,12 +17,75 @@ type Prediction = {
 };
 
 export default function SleepAnalysis() {
-  // Replace with real readings from HC/backend
-  const sleepData = [7, 6.5, 8, 7.5, 8.3, 7, 5.8]; // hours per night (mock)
-  const stepsToday = 5400;
-  const latestHeartRate = 76;
-  const latestSpO2 = 97;
-  const latestBloodPressure = { systolic: 118, diastolic: 76 };
+  const { readExerciseSession } = useExerciseSession(new Date());
+  const { readHeartRate } = useHeartRate(new Date());
+  const { readSleepSession } = useSleepSession(new Date());
+  const { readSteps } = useSteps(new Date());
+  const { readOxygenSaturation } = useOxygenSaturation(new Date());
+
+  const [sleepDataRaw, setSleepDataRaw] = useState<any[]>([]);
+  const [stepsData, setStepsData] = useState<any[]>([]);
+  const [heartRateData, setHeartRateData] = useState<any[]>([]);
+  const [spo2Data, setSpo2Data] = useState<any[]>([]);
+  const [latestHeartRate, setLatestHeartRate] = useState(0);
+  const [latestSpO2, setLatestSpO2] = useState<number | null>(null);
+  const [totalSteps, setTotalSteps] = useState(0);
+  const latestBloodPressure = { systolic: 118, diastolic: 76 }; // Not available in hooks yet
+
+  // Fetch health data
+  useEffect(() => {
+    const loadHealthData = async () => {
+      try {
+        // HEART RATE
+        const hrRecords = await readHeartRate();
+        setHeartRateData(hrRecords);
+        if (hrRecords.length > 0) {
+          const lastRecord = hrRecords[hrRecords.length - 1];
+          const lastSample = lastRecord.samples?.length
+            ? lastRecord.samples[lastRecord.samples.length - 1]
+            : null;
+          setLatestHeartRate(lastSample?.beatsPerMinute ?? 0);
+        }
+
+        // SPO2
+        const spo2Records = await readOxygenSaturation();
+        setSpo2Data(spo2Records);
+        if (spo2Records.length > 0) {
+          const last = spo2Records[spo2Records.length - 1];
+          setLatestSpO2(last.percentage ?? null);
+        }
+
+        // SLEEP
+        const sleepRecords = await readSleepSession();
+        setSleepDataRaw(sleepRecords);
+
+        // STEPS
+        const stepRecords = await readSteps();
+        setStepsData(stepRecords);
+        const total = stepRecords.reduce((t, s) => t + (s.count ?? 0), 0);
+        setTotalSteps(total);
+      } catch (err) {
+        console.log("Health data load error:", err);
+      }
+    };
+
+    loadHealthData();
+  }, []);
+
+  // Calculate sleep hours from raw data
+  const sleepData = useMemo(() => {
+    return sleepDataRaw.map((session) => {
+      if (session?.startTime && session?.endTime) {
+        const start = new Date(session.startTime);
+        const end = new Date(session.endTime);
+        const totalMs = end.getTime() - start.getTime();
+        return Math.max(totalMs / (1000 * 60 * 60), 0);
+      }
+      return 0;
+    }).filter(hours => hours > 0);
+  }, [sleepDataRaw]);
+
+  const stepsToday = totalSteps;
 
   const [prediction, setPrediction] = useState<Prediction>({
     hours: null,
@@ -52,7 +120,7 @@ export default function SleepAnalysis() {
     factors.push({ label: 'Streak', impact: `${sleepStreak} days` });
     factors.push({ label: 'Steps', impact: `${stepsToday} steps` });
     factors.push({ label: 'Heart rate', impact: `${latestHeartRate} bpm` });
-    factors.push({ label: 'SpO₂', impact: `${latestSpO2}%` });
+    if (latestSpO2 !== null) factors.push({ label: 'SpO₂', impact: `${latestSpO2}%` });
     factors.push({ label: 'BP', impact: `${latestBloodPressure.systolic}/${latestBloodPressure.diastolic} mmHg` });
     return factors;
   }, [averageSleep, lastSleepHours, sleepStreak, stepsToday, latestHeartRate, latestSpO2, latestBloodPressure]);

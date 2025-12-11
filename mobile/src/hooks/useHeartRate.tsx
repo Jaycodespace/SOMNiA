@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { requestPermission, readRecords } from 'react-native-health-connect';
+import { requestPermission, readRecords, getGrantedPermissions } from 'react-native-health-connect';
 import { TimeRangeFilter } from 'react-native-health-connect/lib/typescript/types/base.types';
 
 export const useHeartRate = (date: Date) => {
@@ -16,28 +16,52 @@ export const useHeartRate = (date: Date) => {
   };
 
   const requestHeartRate = useCallback(async () => {
-    const granted = await requestPermission([
-      { accessType: 'read', recordType: 'HeartRate' },
-    ]);
+    // First check if permission is already granted
+    try {
+      const granted = await getGrantedPermissions();
+      const hasPermission = granted.some(
+        (p) => p.recordType === 'HeartRate'
+      );
 
-    const hasPermission = granted.some(
-      (p) => p.recordType === 'HeartRate'
-    );
+      if (hasPermission) {
+        return true; // Permission already granted, no need to request
+      }
+    } catch (err) {
+      // If check fails, try requesting permission
+    }
 
-    if (!hasPermission) {
-      throw new Error('Permission not granted for HeartRate');
+    // Only request if not already granted
+    try {
+      const granted = await requestPermission([
+        { accessType: 'read', recordType: 'HeartRate' },
+      ]);
+
+      const hasPermission = granted.some(
+        (p) => p.recordType === 'HeartRate'
+      );
+
+      return hasPermission;
+    } catch (err) {
+      // Permission denied or error - return false silently
+      return false;
     }
   }, []);
 
   const readHeartRate = useCallback(async () => {
-    await requestHeartRate();
+    const hasPermission = await requestHeartRate();
+    
+    if (!hasPermission) {
+      // Return empty array if no permission instead of throwing error
+      return [];
+    }
 
-    const { records } = await readRecords('HeartRate', { timeRangeFilter });
-
-    // Temporary console log for debugging
-    // console.log("Heart Rate Records:", JSON.stringify(records, null, 2));
-
-    return records;
+    try {
+      const { records } = await readRecords('HeartRate', { timeRangeFilter });
+      return records;
+    } catch (err) {
+      // Return empty array on error instead of throwing
+      return [];
+    }
   }, [requestHeartRate, timeRangeFilter]);
 
   return {

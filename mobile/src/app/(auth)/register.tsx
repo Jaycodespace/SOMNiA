@@ -1,18 +1,58 @@
-import { View, Text, TouchableOpacity, Image, TextInput, Pressable } from 'react-native';
-import { useState } from 'react';
+import { View, Text, TouchableOpacity, Image, TextInput, Pressable, Modal } from 'react-native';
+import { useState, useMemo, useCallback } from 'react';
 import { useRouter } from 'expo-router';
 import axios from 'axios';
 import Toast from 'react-native-toast-message';
 import Icon from 'react-native-vector-icons/Ionicons';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import styles from '../../assets/styles/register.styles';
 import LinearGradient from 'react-native-linear-gradient';
+
+const GENDER_OPTIONS = [
+  { label: 'Male', value: 'male' as const },
+  { label: 'Female', value: 'female' as const },
+  { label: 'Prefer not to say', value: 'prefer_not_say' as const },
+];
+
+const formatDate = (date: Date | null): string => {
+  if (!date) return '';
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const getGenderLabel = (value: string): string => {
+  const option = GENDER_OPTIONS.find(opt => opt.value === value);
+  return option ? option.label : 'Select gender';
+};
 
 export default function Register() {
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
+  const [birthdate, setBirthdate] = useState<Date | null>(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [gender, setGender] = useState<'male' | 'female' | 'prefer_not_say' | ''>('');
+  const [showGenderDropdown, setShowGenderDropdown] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  const formattedBirthdate = useMemo(() => formatDate(birthdate), [birthdate]);
+  const genderLabel = useMemo(() => getGenderLabel(gender), [gender]);
+  const defaultDate = useMemo(() => new Date(), []);
+
+  const handleDateChange = useCallback((event: any, selectedDate?: Date) => {
+    setShowDatePicker(false);
+    if (event.type === 'set' && selectedDate) {
+      setBirthdate(selectedDate);
+    }
+  }, []);
+
+  const handleGenderSelect = useCallback((value: 'male' | 'female' | 'prefer_not_say') => {
+    setGender(value);
+    setShowGenderDropdown(false);
+  }, []);
 
   const router = useRouter();
   const backendUrl = 'http://192.168.1.8:4000';
@@ -21,7 +61,7 @@ export default function Register() {
     console.log('Register button pressed!');
     console.log('Form data:', { email, name, password });
     
-    if (!email || !name || !password) {
+    if (!email || !name || !password || !birthdate || !gender) {
       console.log('Missing fields detected');
       Toast.show({
         type: 'error',
@@ -32,7 +72,7 @@ export default function Register() {
     
     console.log('Starting registration...');
     setIsLoading(true);
-    const userData = { email, name, password };
+    const userData = { email, name, password, birthdate: formatDate(birthdate), gender };
     
     try {
       console.log('Sending request to:', `${backendUrl}/api/auth/register`);
@@ -117,6 +157,93 @@ export default function Register() {
             <Icon name={showPassword ? 'eye-off' : 'eye'} size={22} color="#888" style={styles.eyeIcon} />
           </TouchableOpacity>
         </View>
+        {/* Birthdate */}
+        <Text style={styles.label}>Birthdate</Text>
+        <TouchableOpacity
+          style={styles.inputRow}
+          onPress={() => setShowDatePicker(true)}
+        >
+          <View style={{ flex: 1, justifyContent: 'center', height: 48 }}>
+            <Text style={{ color: birthdate ? '#222' : '#aaa', fontSize: 17 }}>
+              {birthdate ? formattedBirthdate : 'Select birthdate'}
+            </Text>
+          </View>
+          <Icon name="calendar-outline" size={22} color="#888" />
+        </TouchableOpacity>
+        {showDatePicker && (
+          <DateTimePicker
+            value={birthdate || defaultDate}
+            mode="date"
+            display="default"
+            onChange={handleDateChange}
+            maximumDate={defaultDate}
+          />
+        )}
+        {/* Gender */}
+        <Text style={styles.label}>Gender</Text>
+        <TouchableOpacity
+          style={styles.inputRow}
+          onPress={() => setShowGenderDropdown(true)}
+        >
+          <View style={{ flex: 1, justifyContent: 'center', height: 48 }}>
+            <Text style={{ color: gender ? '#222' : '#aaa', fontSize: 17 }}>
+              {genderLabel}
+            </Text>
+          </View>
+          <Icon name="chevron-down" size={22} color="#888" />
+        </TouchableOpacity>
+        {/* Gender Dropdown Modal */}
+        <Modal
+          visible={showGenderDropdown}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setShowGenderDropdown(false)}
+        >
+          <TouchableOpacity
+            style={{
+              flex: 1,
+              backgroundColor: 'rgba(0, 0, 0, 0.5)',
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}
+            activeOpacity={1}
+            onPress={() => setShowGenderDropdown(false)}
+          >
+            <View
+              style={{
+                backgroundColor: '#fff',
+                borderRadius: 12,
+                width: '80%',
+                maxWidth: 400,
+                overflow: 'hidden',
+              }}
+            >
+              {GENDER_OPTIONS.map((option, index) => (
+                <TouchableOpacity
+                  key={option.value}
+                  style={{
+                    paddingVertical: 16,
+                    paddingHorizontal: 20,
+                    borderBottomWidth: index < GENDER_OPTIONS.length - 1 ? 1 : 0,
+                    borderBottomColor: '#e0e0e0',
+                    backgroundColor: gender === option.value ? '#f0f4ff' : '#fff',
+                  }}
+                  onPress={() => handleGenderSelect(option.value)}
+                >
+                  <Text
+                    style={{
+                      fontSize: 16,
+                      color: gender === option.value ? '#3578e5' : '#222',
+                      fontWeight: gender === option.value ? '600' : '400',
+                    }}
+                  >
+                    {option.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </TouchableOpacity>
+        </Modal>
         {/* Sign Up Button */}
         <TouchableOpacity style={styles.loginButton} onPress={handleRegister} disabled={isLoading}>
           <Text style={styles.loginButtonText}>{isLoading ? 'Loading...' : 'Sign Up'}</Text>

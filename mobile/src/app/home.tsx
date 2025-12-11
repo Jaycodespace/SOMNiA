@@ -5,8 +5,8 @@ import styles from '../assets/styles/home.styles';
 import LinearGradient from 'react-native-linear-gradient';
 import BottomNav from '../components/BottomNav';
 import SleepAnalysis from './sleepAnalysis';
-import Profile from './profile';
-import Tips from './tips';
+import Profile from './profile/profile';
+import Tips from './Insights';
 import { useExerciseSession } from '../hooks/useExerciseSession';
 import { useHeartRate } from '../hooks/useHeartRate';
 import { useSleepSession } from '../hooks/useSleepSession';
@@ -14,12 +14,14 @@ import { useSteps } from '../hooks/useSteps';
 import { useOxygenSaturation } from '../hooks/useSpo2';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { syncToDB } from '../utils/syncToDB';
+import { useAuthStore } from '../store/useAuthStore';
 
 
 const screenWidth = Dimensions.get("window").width;
 
 export default function Home() {
-  const [userData, setUserData] = useState({ name: '', email: '' });
+  const { name, email } = useAuthStore();
+  const [userData, setUserData] = useState({ name: name || '', email: email || '' });
   const { readExerciseSession } = useExerciseSession(new Date());
   const { readHeartRate } = useHeartRate(new Date());
   const { readSleepSession } = useSleepSession(new Date());
@@ -36,21 +38,16 @@ export default function Home() {
 
   const [selectedTab, setSelectedTab] = useState('home');
 
-  // --- Load User Data from AsyncStorage ---
+  // --- Load User Data from Auth Store ---
   useEffect(() => {
-    const fetchHealthData = async () => {
-      const authDataString = await AsyncStorage.getItem('authData');
-      if (authDataString) {
-        const authData = JSON.parse(authDataString);
-        setUserData({
-          name: authData.name || 'User',
-          email: authData.email || ''
-        });
-      }
-    };
-
-    fetchHealthData();
-  }, []);
+    const authStore = useAuthStore.getState();
+    if (authStore.name || authStore.email) {
+      setUserData({
+        name: authStore.name || 'User',
+        email: authStore.email || ''
+      });
+    }
+  }, [name, email]);
 
   // --- Fetch All Health Data Including SpO2 ---
   useEffect(() => {
@@ -133,7 +130,7 @@ export default function Home() {
           <Image source={require('../assets/images/default-avatar.png')} style={styles.avatar} />
           <View>
             <Text style={styles.greeting}>Welcome,</Text>
-            <Text style={styles.profileName}>{userData.name}</Text>
+            <Text style={styles.profileName}>{userData.name || userData.email || 'User'}</Text>
           </View>
         </View>
 
