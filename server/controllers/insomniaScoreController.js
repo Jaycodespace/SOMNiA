@@ -1,142 +1,90 @@
-import { getInsomniaRisk } from "../services/aiService.js";
-import InsomniaRisk from "../models/insomniaRisk.js";
+// server/controllers/insomniaScoreController.js
 
-/**
- * POST /insomnia-risk
- * Triggers the AI service and (if successful) stores a new InsomniaRisk document.
- */
-export const calculateInsomniaRisk = async (req, res) => {
+import InsomniaRisk from "../models/insomniaRisk.js";
+import { getInsomniaRisk } from "../services/aiService.js";
+
+// Helper to safely extract userId
+function getUserId(req) {
+  return (
+    req.user?.id ||
+    req.user?._id ||
+    req.user?.userId ||
+    req.body?.userId ||
+    null
+  );
+}
+
+// POST /api/ai/insomnia-risk
+// Calls AI, saves risk score, returns the saved document
+export async function calculateInsomniaRisk(req, res) {
   try {
-    const { userId } = req.body;
+    const userId = getUserId(req);
 
     if (!userId) {
+      console.error(
+        "[AI] calculateInsomniaRisk: Missing userId. req.user =",
+        req.user
+      );
       return res.status(400).json({
         success: false,
-        message: "Missing userId",
-      });
-    }
-
-    // Call service (this may return { insufficientData: true, message: "..." })
-    const result = await getInsomniaRisk(userId);
-
-    // CASE 1: Not enough data -> do not save anything, just return message
-    if (result.insufficientData) {
-      return res.status(200).json({
-        success: false,
-        message: result.message,
+        message:
+          "Missing userId. Ensure userAuth attaches req.user or send userId in request body.",
         data: null,
       });
     }
 
-    // CASE 2: We have a valid risk value -> persist in DB
+    console.log("[AI] calculateInsomniaRisk for user:", userId);
+
+    // 1) Call AI service wrapper
+    const aiResult = await getInsomniaRisk(userId);
+    console.log("[AI] getInsomniaRisk result:", aiResult);
+
+    const { insufficientData, message, risk } = aiResult;
+
+    // 2) If insufficient data, do NOT save anything
+    if (insufficientData) {
+      return res.status(200).json({
+        success: false,
+        message:
+          message ||
+          "Insufficient wearable data to compute insomnia risk at this time.",
+        data: null,
+      });
+    }
+
+    // 3) Validate that risk is a real number
+    if (typeof risk !== "number" || Number.isNaN(risk)) {
+      console.error(
+        "[AI] Invalid response from AI service, risk is not a number:",
+        aiResult
+      );
+      return res.status(500).json({
+        success: false,
+        message: "AI service returned an invalid risk value.",
+        data: null,
+      });
+    }
+
+    // 4) Save to Mongo
     const riskDoc = await InsomniaRisk.create({
       user: userId,
-      risk: result.insomnia_risk,
-      windowDays: result.windowDays || 21,
-      calculatedAt: new Date(),
-      // If you want to keep the raw payload, add it to the schema first
-      // rawResponse: result,
+      risk,
+      source: "AI_MODEL",
+      createdAt: new Date(),
     });
 
-    return res.status(200).json({
+    return res.status(201).json({
       success: true,
-      data: {
-        person_id: result.person_id,
-        insomnia_risk: result.insomnia_risk,
-        message: result.message || "Insomnia risk computed successfully.",
-        dbId: riskDoc._id,
-        calculatedAt: riskDoc.calculatedAt,
-      },
+      message: "Insomnia risk computed and saved successfully.",
+      data: riskDoc,
     });
   } catch (err) {
-    console.error("AI error:", err);
+    console.error("[AI] Error in calculateInsomniaRisk:", err);
     return res.status(500).json({
       success: false,
-      message: "Failed to compute insomnia risk.",
+      message: "An error occurred while computing insomnia risk.",
+      error: err.message,
+      data: null,
     });
   }
-};
-
-/**
- * GET /insomnia-risk/:userId/latest
- * Returns the most recent risk score for a given user, without calling the AI again.
- */
-export const getLatestInsomniaRisk = async (req, res) => {
-  try {
-    const { userId } = req.params;
-
-    if (!userId) {
-      return res.status(400).json({
-        success: false,
-        message: "Missing userId",
-      });
-    }
-
-    const latest = await InsomniaRisk.findOne({ user: userId })
-      .sort({ createdAt: -1 })
-      .lean();
-
-    if (!latest) {
-      return res.status(200).json({
-        success: false,
-        message: "No insomnia risk score found for this user.",
-        data: null,
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      data: {
-        user: latest.user,
-        insomnia_risk: latest.risk,
-        windowDays: latest.windowDays,
-        calculatedAt: latest.calculatedAt,
-        id: latest._id,
-      },
-    });
-  } catch (err) {
-    console.error("Get latest insomnia risk error:", err);
-    return res.status(500).json({
-      success: false,
-      message: "Failed to retrieve insomnia risk.",
-    });
-  }
-};
-
-/**
- * Optional: GET /insomnia-risk/:userId/history
- * Returns all saved risk scores for charts / history views.
- */
-export const getInsomniaRiskHistory = async (req, res) => {
-  try {
-    const { userId } = req.params;
-
-    if (!userId) {
-      return res.status(400).json({
-        success: false,
-        message: "Missing userId",
-      });
-    }
-
-    const history = await InsomniaRisk.find({ user: userId })
-      .sort({ createdAt: 1 }) // oldest → newest
-      .lean();
-
-    return res.status(200).json({
-      success: true,
-      count: history.length,
-      data: history.map((item) => ({
-        id: item._id,
-        insomnia_risk: item.risk,
-        windowDays: item.windowDays,
-        calculatedAt: item.calculatedAt,
-      })),
-    });
-  } catch (err) {
-    console.error("Get insomnia risk history error:", err);
-    return res.status(500).json({
-      success: false,
-      message: "Failed to retrieve insomnia risk history.",
-    });
-  }
-};
+}

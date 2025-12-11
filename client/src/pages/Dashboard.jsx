@@ -7,6 +7,7 @@ import SleepSession from '../components/SleepSession.jsx';
 import Step from '../components/Steps.jsx';
 import { AppContext } from '../context/AppContext';
 import axios from 'axios';
+import Ai from '../components/ai.jsx';
 
 import {
   ArrowTrendingUpIcon,
@@ -15,7 +16,6 @@ import {
   ExclamationTriangleIcon,
   ArrowPathIcon,
 } from '@heroicons/react/24/outline';
-
 // Create a context for refresh functionality
 const RefreshContext = createContext();
 
@@ -982,7 +982,7 @@ const Dashboard = () => {
       case 'statistics':
         return <StatisticsView />;
       case 'prediction':
-        return <AIModelStatus />;
+        return <Ai />;
       default:
         return <HealthComponentsWrapper />;
     }

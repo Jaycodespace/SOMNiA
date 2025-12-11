@@ -1,4 +1,4 @@
-# ai_service/app/main.py (top part only – replacing DayData/Predict models)
+# ai_service/app/main.py
 
 from typing import List, Optional
 import joblib
@@ -11,6 +11,9 @@ from .config import SERVICE_NAME, SEQ_LEN, FEATURE_NAMES, MODEL_PATH, SCALER_PAT
 from .insomnia_model_def import InsomniaNet
 
 
+# ---------------------------------------------------------
+# Pydantic models for request/response
+# ---------------------------------------------------------
 class DayData(BaseModel):
     hr_mean: Optional[float] = None
     hr_min: Optional[float] = None
@@ -35,7 +38,8 @@ class DayData(BaseModel):
 class PredictRequest(BaseModel):
     person_id: str = Field(..., description="User ID from your backend")
     days: List[DayData] = Field(
-        ..., description=f"Ordered list (oldest→newest) of {SEQ_LEN} daily features"
+        ...,
+        description=f"Ordered list (oldest→newest) of {SEQ_LEN} daily features",
     )
 
 
@@ -45,6 +49,9 @@ class PredictResponse(BaseModel):
     message: str
 
 
+# ---------------------------------------------------------
+# Model + scaler initialization
+# ---------------------------------------------------------
 device = torch.device("cpu")
 
 n_features = len(FEATURE_NAMES)
@@ -59,6 +66,9 @@ scaler = joblib.load(SCALER_PATH)
 app = FastAPI(title=SERVICE_NAME)
 
 
+# ---------------------------------------------------------
+# Helper: convert request → tensor for model
+# ---------------------------------------------------------
 def request_to_tensor(req: PredictRequest) -> torch.Tensor:
     if len(req.days) != SEQ_LEN:
         raise HTTPException(
@@ -68,20 +78,28 @@ def request_to_tensor(req: PredictRequest) -> torch.Tensor:
 
     seq = []
     for d in req.days:
-        # same order as FEATURE_NAMES
+        # Same order as FEATURE_NAMES coming from config
         row = [getattr(d, name) for name in FEATURE_NAMES]
         seq.append(row)
 
-    
     arr = np.array(seq, dtype=np.float32)
 
+    # Replace NaNs / infs with 0
     arr = np.nan_to_num(arr, nan=0.0, posinf=0.0, neginf=0.0)
+
+    # Scale with the same scaler used in training
     arr_scaled = scaler.transform(arr)
-    arr_scaled = np.expand_dims(arr_scaled, axis=0)  
+
+    # Add batch dimension: (1, seq_len, n_features)
+    arr_scaled = np.expand_dims(arr_scaled, axis=0)
+
     tensor = torch.from_numpy(arr_scaled).to(device)
     return tensor
 
 
+# ---------------------------------------------------------
+# Health check
+# ---------------------------------------------------------
 @app.get("/health")
 def health_check():
     return {
@@ -92,6 +110,9 @@ def health_check():
     }
 
 
+# ---------------------------------------------------------
+# Predict endpoint - Node will call this at POST /predict
+# ---------------------------------------------------------
 @app.post("/predict", response_model=PredictResponse)
 def predict(req: PredictRequest):
     x = request_to_tensor(req)
@@ -106,4 +127,3 @@ def predict(req: PredictRequest):
         insomnia_risk=risk,
         message="Insomnia risk computed successfully.",
     )
-
