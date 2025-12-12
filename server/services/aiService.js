@@ -9,7 +9,8 @@ import ExerciseSession from "../models/exerciseModel.js";
 import BloodPressure from "../models/bloodPressureModels.js";
 import SpO2 from "../models/spo2Model.js"; // ⬅️ NEW
 
-const AI_SERVICE_URL = process.env.AI_SERVICE_URL || "http://localhost:8001";
+// Ensure no trailing slash in AI_SERVICE_URL
+const AI_SERVICE_URL = (process.env.AI_SERVICE_URL || "http://localhost:8001").replace(/\/+$/, "");
 const SEQ_LEN = 21; // must match your FastAPI SEQ_LEN
 
 //-----------------------------------------------------
@@ -380,7 +381,9 @@ export async function buildDailyFeatures(userId, seqLen = SEQ_LEN) {
 // Call FastAPI model → POST /predict
 //-----------------------------------------------------
 async function callInsomniaModel(userId, days) {
-  const url = `${AI_SERVICE_URL}/predict`;
+  // Ensure proper URL construction (no double slashes)
+  const baseUrl = AI_SERVICE_URL.replace(/\/+$/, ""); // Remove trailing slashes
+  const url = `${baseUrl}/predict`;
   console.log("[AI] Calling FastAPI model at:", url);
 
   const resp = await axios.post(url, {

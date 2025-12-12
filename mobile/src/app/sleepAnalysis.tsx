@@ -287,18 +287,31 @@ export default function SleepAnalysis() {
       );
 
       console.log("[SleepAnalysis] Response from POST /insomnia-risk", res.data);
+      console.log("[SleepAnalysis] Full response:", JSON.stringify(res.data, null, 2));
 
       const { success, data, message: apiMessage } = res.data || {};
 
+      console.log("[SleepAnalysis] Parsed values:", {
+        success,
+        hasData: !!data,
+        dataType: typeof data,
+        riskValue: data?.risk,
+        riskType: typeof data?.risk,
+      });
+
       if (success && data && typeof data.risk === "number") {
+        console.log("[SleepAnalysis] Setting risk - value:", data.risk);
         setRiskRaw(data.risk); // keep the raw 0.xxx value
         const riskPercent = getRiskPercent(data.risk);
+        console.log("[SleepAnalysis] Risk percent:", riskPercent);
         setRiskStatus('ok');
         setRiskMessage(apiMessage || "Insomnia risk computed successfully.");
         setRiskLastUpdated(
           data.createdAt ? new Date(data.createdAt) : new Date()
         );
+        console.log("[SleepAnalysis] State updated - riskStatus: ok, riskRaw:", data.risk);
       } else {
+        console.log("[SleepAnalysis] No valid risk - success:", success, "data:", data, "risk type:", typeof data?.risk);
         setRiskRaw(null);
         setRiskStatus('no-data');
         setRiskMessage(
@@ -343,7 +356,7 @@ export default function SleepAnalysis() {
           ) : (
             <>
               {/* Insomnia Risk Display - following web pattern */}
-              {riskStatus === 'ok' && riskRaw !== null && (
+              {riskStatus === 'ok' && riskRaw !== null ? (
                 <>
                   <Text style={[styles.metaText, { fontSize: 11, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }]}>
                     Current Risk
@@ -367,7 +380,11 @@ export default function SleepAnalysis() {
                     </Text>
                   )}
                 </>
-              )}
+              ) : riskStatus === 'ok' ? (
+                <Text style={[styles.metaText, { color: '#ff6b6b' }]}>
+                  Error: Risk calculated but value is missing
+                </Text>
+              ) : null}
               
               {riskStatus === 'no-data' && (
                 <Text style={[styles.metaText, { color: '#ffa500', marginTop: 8 }]}>
