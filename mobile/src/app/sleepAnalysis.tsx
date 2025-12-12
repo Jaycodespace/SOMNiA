@@ -1,20 +1,25 @@
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useMemo, useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
+import axios from 'axios';
 import { useExerciseSession } from '../hooks/useExerciseSession';
 import { useHeartRate } from '../hooks/useHeartRate';
 import { useSleepSession } from '../hooks/useSleepSession';
 import { useSteps } from '../hooks/useSteps';
 import { useOxygenSaturation } from '../hooks/useSpo2';
+import { useAuthStore } from '../store/useAuthStore';
 import styles from '../assets/styles/sleepAnalysis.styles';
 
 type Prediction = {
   hours: number | null;
   quality: 'Quality sleep' | 'Good sleep' | 'Poor sleep' | '';
-  confidence: number | null;
   factors: { label: string; impact: string }[];
-  insomniaRisk: number | null;
+  insomniaRisk: number | null; // percentage (0-100)
 };
+
+type RiskStatus = 'idle' | 'loading' | 'ok' | 'no-data' | 'error';
+
+const backendUrl = 'http://172.20.10.2:4000';
 
 export default function SleepAnalysis() {
   const { readExerciseSession } = useExerciseSession(new Date());
@@ -22,6 +27,7 @@ export default function SleepAnalysis() {
   const { readSleepSession } = useSleepSession(new Date());
   const { readSteps } = useSteps(new Date());
   const { readOxygenSaturation } = useOxygenSaturation(new Date());
+  const { token, userId } = useAuthStore();
 
   const [sleepDataRaw, setSleepDataRaw] = useState<any[]>([]);
   const [stepsData, setStepsData] = useState<any[]>([]);
@@ -30,47 +36,169 @@ export default function SleepAnalysis() {
   const [latestHeartRate, setLatestHeartRate] = useState(0);
   const [latestSpO2, setLatestSpO2] = useState<number | null>(null);
   const [totalSteps, setTotalSteps] = useState(0);
-  const latestBloodPressure = { systolic: 118, diastolic: 76 }; // Not available in hooks yet
+  const [latestBloodPressure, setLatestBloodPressure] = useState<{ systolic: number; diastolic: number } | null>(null);
 
-  // Fetch health data
+  // --- Fetch All Health Data from Database and Local Device ---
   useEffect(() => {
     const loadHealthData = async () => {
+      let dbHeartRate = null;
+      let dbSteps = null;
+      let dbSleep = null;
+      let dbSpO2 = null;
+
       try {
-        // HEART RATE
-        const hrRecords = await readHeartRate();
-        setHeartRateData(hrRecords);
-        if (hrRecords.length > 0) {
-          const lastRecord = hrRecords[hrRecords.length - 1];
-          const lastSample = lastRecord.samples?.length
-            ? lastRecord.samples[lastRecord.samples.length - 1]
-            : null;
-          setLatestHeartRate(lastSample?.beatsPerMinute ?? 0);
+        // First, try to fetch from database if user is authenticated
+        if (token && userId) {
+          try {
+            // Fetch Heart Rate from database
+            try {
+              const hrResponse = await axios.get(`${backendUrl}/api/heartRate/stats`, {
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                },
+                timeout: 10000,
+              });
+              if (hrResponse.data.success && hrResponse.data.data?.latestHeartRate) {
+                dbHeartRate = hrResponse.data.data.latestHeartRate;
+                setLatestHeartRate(dbHeartRate);
+              }
+            } catch (hrErr) {
+              console.log("Heart rate fetch error:", hrErr);
+            }
+
+            // Fetch Steps from database
+            try {
+              const stepsResponse = await axios.get(`${backendUrl}/api/step/stats`, {
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                },
+                timeout: 10000,
+              });
+              if (stepsResponse.data.success && stepsResponse.data.data?.totalSteps) {
+                dbSteps = stepsResponse.data.data.totalSteps;
+                setTotalSteps(dbSteps);
+              }
+            } catch (stepsErr) {
+              console.log("Steps fetch error:", stepsErr);
+            }
+
+            // Fetch Sleep from database
+            try {
+              const sleepResponse = await axios.get(`${backendUrl}/api/sleepSession/latest`, {
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                },
+                timeout: 10000,
+              });
+              if (sleepResponse.data.success && sleepResponse.data.data) {
+                const sleepData = sleepResponse.data.data;
+                // Convert to format compatible with local data
+                if (sleepData.latestSessionMinutes) {
+                  const now = new Date();
+                  const startTime = sleepData.sessionStartTime 
+                    ? new Date(sleepData.sessionStartTime)
+                    : new Date(now.getTime() - sleepData.latestSessionMinutes * 60 * 1000);
+                  const endTime = sleepData.sessionEndTime 
+                    ? new Date(sleepData.sessionEndTime)
+                    : now;
+                  
+                  dbSleep = [{
+                    startTime: startTime.toISOString(),
+                    endTime: endTime.toISOString(),
+                  }];
+                  setSleepDataRaw(dbSleep);
+                }
+              }
+            } catch (sleepErr) {
+              // Fallback to stats endpoint
+              try {
+                const sleepStatsResponse = await axios.get(`${backendUrl}/api/sleepSession/stats`, {
+                  headers: {
+                    'Authorization': `Bearer ${token}`,
+                  },
+                  timeout: 10000,
+                });
+                if (sleepStatsResponse.data.success && sleepStatsResponse.data.data) {
+                  // Process stats data if needed
+                }
+              } catch (statsErr) {
+                console.log("Sleep stats fetch error:", statsErr);
+              }
+            }
+
+            // Fetch SpO2 from database
+            try {
+              const spo2Response = await axios.get(`${backendUrl}/api/spo2/get/${userId}`, {
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                },
+                timeout: 10000,
+              });
+              if (spo2Response.data.success && spo2Response.data.data?.percentage) {
+                dbSpO2 = spo2Response.data.data.percentage;
+                setLatestSpO2(dbSpO2);
+              }
+            } catch (spo2Err) {
+              console.log("SpO2 fetch error:", spo2Err);
+            }
+          } catch (dbErr) {
+            console.log("Database fetch error:", dbErr);
+          }
         }
 
-        // SPO2
-        const spo2Records = await readOxygenSaturation();
-        setSpo2Data(spo2Records);
-        if (spo2Records.length > 0) {
-          const last = spo2Records[spo2Records.length - 1];
-          setLatestSpO2(last.percentage ?? null);
+        // Also load from local device (Health Connect) as fallback or supplement
+        try {
+          // HEART RATE (local device) - only use if no database data
+          const hrRecords = await readHeartRate();
+          setHeartRateData(hrRecords);
+          if (dbHeartRate === null && hrRecords.length > 0) {
+            const lastRecord = hrRecords[hrRecords.length - 1];
+            const lastSample = lastRecord.samples?.length
+              ? lastRecord.samples[lastRecord.samples.length - 1]
+              : null;
+            if (lastSample?.beatsPerMinute) {
+              setLatestHeartRate(lastSample.beatsPerMinute);
+            }
+          }
+
+          // SPO2 (local device) - only use if no database data
+          const spo2Records = await readOxygenSaturation();
+          setSpo2Data(spo2Records);
+          if (dbSpO2 === null && spo2Records.length > 0) {
+            const last = spo2Records[spo2Records.length - 1];
+            if (last.percentage) {
+              setLatestSpO2(last.percentage);
+            }
+          }
+
+          // SLEEP (local device) - only use if no database data
+          if (dbSleep === null) {
+            const sleepRecords = await readSleepSession();
+            if (sleepRecords.length > 0) {
+              setSleepDataRaw(sleepRecords);
+            }
+          }
+
+          // STEPS (local device) - only use if no database data
+          const stepRecords = await readSteps();
+          setStepsData(stepRecords);
+          if (dbSteps === null) {
+            const total = stepRecords.reduce((t, s) => t + (s.count ?? 0), 0);
+            if (total > 0) {
+              setTotalSteps(total);
+            }
+          }
+        } catch (localErr) {
+          console.log("Local health data load error:", localErr);
         }
 
-        // SLEEP
-        const sleepRecords = await readSleepSession();
-        setSleepDataRaw(sleepRecords);
-
-        // STEPS
-        const stepRecords = await readSteps();
-        setStepsData(stepRecords);
-        const total = stepRecords.reduce((t, s) => t + (s.count ?? 0), 0);
-        setTotalSteps(total);
       } catch (err) {
         console.log("Health data load error:", err);
       }
     };
 
     loadHealthData();
-  }, []);
+  }, [token, userId]);
 
   // Calculate sleep hours from raw data
   const sleepData = useMemo(() => {
@@ -90,10 +218,13 @@ export default function SleepAnalysis() {
   const [prediction, setPrediction] = useState<Prediction>({
     hours: null,
     quality: '',
-    confidence: null,
     factors: [],
     insomniaRisk: null,
   });
+  const [riskRaw, setRiskRaw] = useState<number | null>(null); // Store raw 0-1 value like web version
+  const [riskStatus, setRiskStatus] = useState<RiskStatus>('idle');
+  const [riskMessage, setRiskMessage] = useState<string>('');
+  const [riskLastUpdated, setRiskLastUpdated] = useState<Date | null>(null);
 
   const averageSleep = useMemo(() => {
     if (!sleepData.length) return null;
@@ -121,32 +252,76 @@ export default function SleepAnalysis() {
     factors.push({ label: 'Steps', impact: `${stepsToday} steps` });
     factors.push({ label: 'Heart rate', impact: `${latestHeartRate} bpm` });
     if (latestSpO2 !== null) factors.push({ label: 'SpO₂', impact: `${latestSpO2}%` });
-    factors.push({ label: 'BP', impact: `${latestBloodPressure.systolic}/${latestBloodPressure.diastolic} mmHg` });
+    if (latestBloodPressure !== null) factors.push({ label: 'BP', impact: `${latestBloodPressure.systolic}/${latestBloodPressure.diastolic} mmHg` });
     return factors;
   }, [averageSleep, lastSleepHours, sleepStreak, stepsToday, latestHeartRate, latestSpO2, latestBloodPressure]);
 
-  const handlePredict = () => {
-    // Placeholder prediction logic; replace with actual model when available.
-    const avg = averageSleep ?? 6.5;
-    const last = lastSleepHours ?? 6.5;
-    const predictedHours = Math.max(5.5, Math.min(8.5, avg * 0.4 + last * 0.6));
-    let quality: Prediction['quality'] = 'Good sleep';
-    if (predictedHours > 7) quality = 'Quality sleep';
-    else if (predictedHours < 6) quality = 'Poor sleep';
+  // Helper: convert 0–1 risk to percentage with normal rounding
+  const getRiskPercent = (value: number | null): number | null => {
+    if (typeof value !== "number") return null;
+    return Math.round(value * 100); // 0.554 -> 55, 0.555 -> 56
+  };
 
-    // Simple insomnia risk heuristic: lower hours => higher risk
-    let insomniaRisk = 30; // base
-    if (predictedHours < 6) insomniaRisk = 75;
-    else if (predictedHours < 7) insomniaRisk = 55;
-    else insomniaRisk = 20;
+  // POST → call AI, save to DB, return fresh score (same as web implementation)
+  const handlePredict = async () => {
+    if (!backendUrl || !token) return;
 
-    setPrediction({
-      hours: Number(predictedHours.toFixed(1)),
-      quality,
-      confidence: 82,
-      factors: derivedFactors,
-      insomniaRisk,
-    });
+    try {
+      setRiskStatus('loading');
+      setRiskMessage("Computing your insomnia risk score…");
+      setRiskRaw(null);
+
+      const url = `${backendUrl}/api/ai/insomnia-risk`;
+      console.log("[SleepAnalysis] Sending POST /api/ai/insomnia-risk", { url });
+
+      const res = await axios.post(
+        url,
+        {}, // no body; user comes from token on the server
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          timeout: 20000,
+        }
+      );
+
+      console.log("[SleepAnalysis] Response from POST /insomnia-risk", res.data);
+
+      const { success, data, message: apiMessage } = res.data || {};
+
+      if (success && data && typeof data.risk === "number") {
+        setRiskRaw(data.risk); // keep the raw 0.xxx value
+        const riskPercent = getRiskPercent(data.risk);
+        setRiskStatus('ok');
+        setRiskMessage(apiMessage || "Insomnia risk computed successfully.");
+        setRiskLastUpdated(
+          data.createdAt ? new Date(data.createdAt) : new Date()
+        );
+      } else {
+        setRiskRaw(null);
+        setRiskStatus('no-data');
+        setRiskMessage(
+          apiMessage ||
+          "Insufficient data to compute insomnia risk. Keep wearing your device consistently."
+        );
+        setRiskLastUpdated(null);
+      }
+    } catch (err: any) {
+      console.error("[SleepAnalysis] ERROR calling insomnia-risk:", err);
+
+      const serverMsg =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        err.message;
+
+      setRiskRaw(null);
+      setRiskStatus('error');
+      setRiskMessage(
+        serverMsg || "Something went wrong while contacting the AI service."
+      );
+      setRiskLastUpdated(null);
+    }
   };
 
   return (
@@ -158,22 +333,84 @@ export default function SleepAnalysis() {
         </View>
 
         <View style={styles.predictionHero}>
-          <Ionicons name="moon-outline" size={36} color="#a259ff" />
-          <Text style={styles.predictedHours}>
-            {prediction.hours !== null ? `${prediction.hours}h` : '--'}
-          </Text>
-          <Text style={styles.qualityBadge}>{prediction.quality || 'Tap Predict'}</Text>
-          {prediction.insomniaRisk !== null && (
-            <Text style={styles.riskBadge}>Insomnia risk: {prediction.insomniaRisk}%</Text>
-          )}
-          {prediction.confidence !== null && (
-            <Text style={styles.metaText}>Confidence: {prediction.confidence}%</Text>
+          {riskStatus === 'loading' ? (
+            <>
+              <ActivityIndicator size="large" color="#a259ff" />
+              <Text style={styles.metaText}>
+                {riskMessage || "Computing your insomnia risk score…"}
+              </Text>
+            </>
+          ) : (
+            <>
+              {/* Insomnia Risk Display - following web pattern */}
+              {riskStatus === 'ok' && riskRaw !== null && (
+                <>
+                  <Text style={[styles.metaText, { fontSize: 11, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }]}>
+                    Current Risk
+                  </Text>
+                  <Text style={[styles.predictedHours, { fontSize: 48, marginBottom: 4 }]}>
+                    {getRiskPercent(riskRaw) ?? '--'}%
+                  </Text>
+                  <Text style={[styles.metaText, { fontSize: 11, marginBottom: 8 }]}>
+                    Raw score:{" "}
+                    <Text style={{ fontFamily: 'monospace' }}>
+                      {riskRaw.toFixed(3)}
+                    </Text>{" "}
+                    (0.000 – 1.000)
+                  </Text>
+                  <Text style={[styles.metaText, { fontSize: 10, marginBottom: 8 }]}>
+                    0.000 = very low risk · 1.000 = very high risk
+                  </Text>
+                  {riskMessage && (
+                    <Text style={[styles.metaText, { marginTop: 8 }]}>
+                      {riskMessage}
+                    </Text>
+                  )}
+                </>
+              )}
+              
+              {riskStatus === 'no-data' && (
+                <Text style={[styles.metaText, { color: '#ffa500', marginTop: 8 }]}>
+                  {riskMessage}
+                </Text>
+              )}
+              
+              {riskStatus === 'error' && (
+                <Text style={[styles.metaText, { color: '#ff6b6b', marginTop: 8 }]}>
+                  {riskMessage}
+                </Text>
+              )}
+              
+              {(riskStatus === 'idle' || (riskStatus === 'error' && riskRaw === null)) && (
+                <Text style={[styles.metaText, { marginTop: 8 }]}>
+                  When you are ready, tap predict to compute your current insomnia risk score.
+                </Text>
+              )}
+              
+              {riskLastUpdated && (
+                <Text style={[styles.metaText, { fontSize: 10, marginTop: 8 }]}>
+                  Last computed {riskLastUpdated.toLocaleString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    hour: "numeric",
+                    minute: "2-digit",
+                    hour12: true,
+                  })}
+                </Text>
+              )}
+            </>
           )}
         </View>
 
-        <TouchableOpacity style={styles.predictButtonFull} onPress={handlePredict}>
+        <TouchableOpacity 
+          style={[styles.predictButtonFull, riskStatus === 'loading' && { opacity: 0.6 }]} 
+          onPress={handlePredict}
+          disabled={riskStatus === 'loading'}
+        >
           <Ionicons name="sparkles-outline" size={18} color="#fff" />
-          <Text style={styles.predictButtonText}>Predict</Text>
+          <Text style={styles.predictButtonText}>
+            {riskStatus === 'loading' ? 'Running prediction…' : 'Predict'}
+          </Text>
         </TouchableOpacity>
       </View>
 
@@ -205,7 +442,7 @@ export default function SleepAnalysis() {
           <View style={styles.statTile}>
             <Ionicons name="medkit-outline" size={20} color="#ff9f1c" />
             <Text style={styles.statValue}>
-              {latestBloodPressure.systolic && latestBloodPressure.diastolic
+              {latestBloodPressure
                 ? `${latestBloodPressure.systolic}/${latestBloodPressure.diastolic}`
                 : '--'}
             </Text>

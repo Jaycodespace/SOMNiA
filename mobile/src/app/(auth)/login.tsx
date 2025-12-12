@@ -19,7 +19,7 @@ export default function Login() {
     const router = useRouter();
 
     // Use localhost for web development
-    const backendUrl = 'http://192.168.1.8:4000';
+    const backendUrl = 'http://172.20.10.2:4000';
 
     const handleLogin = async () => {
         setIsLoading(true);

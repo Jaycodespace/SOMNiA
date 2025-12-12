@@ -1,12 +1,17 @@
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { useState, useEffect, useMemo } from 'react';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import axios from 'axios';
+import { readRecords, getGrantedPermissions, requestPermission } from 'react-native-health-connect';
 import { useExerciseSession } from '../hooks/useExerciseSession';
 import { useHeartRate } from '../hooks/useHeartRate';
 import { useSleepSession } from '../hooks/useSleepSession';
 import { useSteps } from '../hooks/useSteps';
 import { useOxygenSaturation } from '../hooks/useSpo2';
+import { useAuthStore } from '../store/useAuthStore';
 import styles from '../assets/styles/insights.styles';
+
+const backendUrl = 'http://172.20.10.2:4000';
 
 interface TrendData {
   title: string;
@@ -38,34 +43,257 @@ export default function Insights() {
   const { readSleepSession } = useSleepSession(new Date());
   const { readSteps } = useSteps(new Date());
   const { readOxygenSaturation } = useOxygenSaturation(new Date());
+  const { token, userId } = useAuthStore();
 
   const [sleepDataRaw, setSleepDataRaw] = useState<any[]>([]);
   const [stepsData, setStepsData] = useState<any[]>([]);
   const [heartRateData, setHeartRateData] = useState<any[]>([]);
   const [spo2Data, setSpo2Data] = useState<any[]>([]);
 
-  // Fetch health data
+  // --- Fetch All Health Data from Database and Local Device ---
   useEffect(() => {
     const loadHealthData = async () => {
+      let dbHeartRate = null;
+      let dbSteps = null;
+      let dbSleep = null;
+      let dbSpO2 = null;
+
       try {
-        const hrRecords = await readHeartRate();
-        setHeartRateData(hrRecords);
+        // First, try to fetch from database if user is authenticated
+        if (token && userId) {
+          try {
+            // Fetch Heart Rate from database
+            try {
+              const hrResponse = await axios.get(`${backendUrl}/api/heartRate/stats`, {
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                },
+                timeout: 10000,
+              });
+              if (hrResponse.data.success && hrResponse.data.data?.latestHeartRate) {
+                dbHeartRate = hrResponse.data.data.latestHeartRate;
+                // Convert to array format for Insights (needs records for trends)
+                // We'll use the latest heart rate and create a record structure
+                if (hrResponse.data.data.latestTimestamp) {
+                  dbHeartRate = [{
+                    samples: [{
+                      beatsPerMinute: hrResponse.data.data.latestHeartRate,
+                      time: hrResponse.data.data.latestTimestamp,
+                    }],
+                  }];
+                  setHeartRateData(dbHeartRate);
+                }
+              }
+            } catch (hrErr) {
+              console.log("Heart rate fetch error:", hrErr);
+            }
 
-        const spo2Records = await readOxygenSaturation();
-        setSpo2Data(spo2Records);
+            // Fetch Steps from database
+            try {
+              const stepsResponse = await axios.get(`${backendUrl}/api/step/stats`, {
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                },
+                timeout: 10000,
+              });
+              if (stepsResponse.data.success && stepsResponse.data.data?.totalSteps) {
+                dbSteps = stepsResponse.data.data.totalSteps;
+                // Note: Stats endpoint gives totals, but Insights needs individual records for trends
+                // We'll still fetch from local device for the records array
+              }
+            } catch (stepsErr) {
+              console.log("Steps fetch error:", stepsErr);
+            }
 
-        const sleepRecords = await readSleepSession();
-        setSleepDataRaw(sleepRecords);
+            // Fetch Sleep from database - try history first for trends
+            try {
+              const sleepResponse = await axios.get(`${backendUrl}/api/sleepSession/history`, {
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                },
+                timeout: 10000,
+              });
+              if (sleepResponse.data.success && sleepResponse.data.data) {
+                const sleepHistory = Array.isArray(sleepResponse.data.data.sessions) 
+                  ? sleepResponse.data.data.sessions 
+                  : Array.isArray(sleepResponse.data.data)
+                  ? sleepResponse.data.data
+                  : [];
+                // Convert database format to local format
+                dbSleep = sleepHistory.map((session: any) => ({
+                  startTime: session.startTime || session.start,
+                  endTime: session.endTime || session.end,
+                }));
+                if (dbSleep.length > 0) {
+                  setSleepDataRaw(dbSleep);
+                }
+              }
+            } catch (sleepErr) {
+              // Fallback to latest endpoint
+              try {
+                const sleepLatestResponse = await axios.get(`${backendUrl}/api/sleepSession/latest`, {
+                  headers: {
+                    'Authorization': `Bearer ${token}`,
+                  },
+                  timeout: 10000,
+                });
+                if (sleepLatestResponse.data.success && sleepLatestResponse.data.data) {
+                  const sleepData = sleepLatestResponse.data.data;
+                  if (sleepData.latestSessionMinutes) {
+                    const now = new Date();
+                    const startTime = sleepData.sessionStartTime 
+                      ? new Date(sleepData.sessionStartTime)
+                      : new Date(now.getTime() - sleepData.latestSessionMinutes * 60 * 1000);
+                    const endTime = sleepData.sessionEndTime 
+                      ? new Date(sleepData.sessionEndTime)
+                      : now;
+                    
+                    dbSleep = [{
+                      startTime: startTime.toISOString(),
+                      endTime: endTime.toISOString(),
+                    }];
+                    setSleepDataRaw(dbSleep);
+                  }
+                }
+              } catch (latestErr) {
+                console.log("Sleep latest fetch error:", latestErr);
+              }
+            }
 
-        const stepRecords = await readSteps();
-        setStepsData(stepRecords);
+            // Fetch SpO2 from database
+            try {
+              const spo2Response = await axios.get(`${backendUrl}/api/spo2/get/${userId}`, {
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                },
+                timeout: 10000,
+              });
+              if (spo2Response.data.success && spo2Response.data.data?.percentage) {
+                // Convert to array format for Insights
+                const spo2Record = spo2Response.data.data;
+                dbSpO2 = [{
+                  percentage: spo2Record.percentage,
+                  time: spo2Record.time || spo2Record.lastModifiedTime,
+                }];
+                setSpo2Data(dbSpO2);
+              }
+            } catch (spo2Err) {
+              console.log("SpO2 fetch error:", spo2Err);
+            }
+          } catch (dbErr) {
+            console.log("Database fetch error:", dbErr);
+          }
+        }
+
+        // Also load from local device (Health Connect) as fallback or supplement
+        try {
+          // STEPS (local device) - always load (like home.tsx)
+          const stepRecords = await readSteps();
+          console.log("[Insights] Loaded step records from hook:", stepRecords?.length || 0);
+          setStepsData(stepRecords);
+          
+          // Try to get additional days for better trends (if permission allows)
+          if (stepRecords && stepRecords.length > 0) {
+            try {
+              const granted = await getGrantedPermissions();
+              const hasPermission = granted.some((p) => p.recordType === 'Steps');
+              
+              if (hasPermission) {
+                const allStepRecords: any[] = [...stepRecords]; // Start with today's data
+                
+                // Fetch steps for last 6 days (we already have today)
+                for (let i = 1; i <= 6; i++) {
+                  try {
+                    const date = new Date();
+                    date.setDate(date.getDate() - i);
+                    date.setHours(0, 0, 0, 0);
+                    
+                    const endDate = new Date(date);
+                    endDate.setHours(23, 59, 59, 999);
+
+                    const { records } = await readRecords('Steps', {
+                      timeRangeFilter: {
+                        operator: 'between',
+                        startTime: date.toISOString(),
+                        endTime: endDate.toISOString(),
+                      },
+                    });
+                    if (records && records.length > 0) {
+                      allStepRecords.push(...records);
+                    }
+                  } catch (dayErr) {
+                    // Continue to next day if one fails
+                    console.log(`[Insights] Error loading steps for day ${i}:`, dayErr);
+                  }
+                }
+                
+                console.log("[Insights] Total step records (7 days):", allStepRecords.length);
+                if (allStepRecords.length > stepRecords.length) {
+                  // Only update if we got more data
+                  setStepsData(allStepRecords);
+                }
+              }
+            } catch (extendedErr) {
+              // If extended read fails, we already have today's data from hook
+              console.log("[Insights] Extended steps read failed, using today's data:", extendedErr);
+            }
+          }
+
+          // HEART RATE (local device) - only use if no database data
+          const hrRecords = await readHeartRate();
+          if (dbHeartRate === null && hrRecords.length > 0) {
+            setHeartRateData(hrRecords);
+          } else if (dbHeartRate === null && hrRecords.length === 0) {
+            // No data from either source, keep empty
+          } else if (dbHeartRate !== null && Array.isArray(dbHeartRate) && hrRecords.length > 0) {
+            // Merge database and local data for more complete history
+            setHeartRateData([...dbHeartRate, ...hrRecords]);
+          } else if (dbHeartRate !== null && Array.isArray(dbHeartRate)) {
+            // Use database data if available
+            setHeartRateData(dbHeartRate);
+          }
+
+          // SPO2 (local device) - only use if no database data
+          const spo2Records = await readOxygenSaturation();
+          if (dbSpO2 === null && spo2Records.length > 0) {
+            setSpo2Data(spo2Records);
+          } else if (dbSpO2 === null && spo2Records.length === 0) {
+            // No data from either source
+          } else if (dbSpO2 !== null && Array.isArray(dbSpO2) && spo2Records.length > 0) {
+            // Merge database and local data for more complete history
+            setSpo2Data([...dbSpO2, ...spo2Records]);
+          } else if (dbSpO2 !== null && Array.isArray(dbSpO2)) {
+            // Use database data if available
+            setSpo2Data(dbSpO2);
+          }
+
+          // SLEEP (local device) - only use if no database data
+          if (dbSleep === null) {
+            const sleepRecords = await readSleepSession();
+            if (sleepRecords.length > 0) {
+              setSleepDataRaw(sleepRecords);
+            }
+          } else if (dbSleep !== null && Array.isArray(dbSleep) && dbSleep.length > 0) {
+            // Merge database and local data for more complete history
+            const sleepRecords = await readSleepSession();
+            if (sleepRecords.length > 0) {
+              setSleepDataRaw([...dbSleep, ...sleepRecords]);
+            } else {
+              // Use database data if no local data
+              setSleepDataRaw(dbSleep);
+            }
+          }
+        } catch (localErr) {
+          console.error("[Insights] Local health data load error:", localErr);
+        }
+
       } catch (err) {
         console.log("Health data load error:", err);
       }
     };
 
     loadHealthData();
-  }, []);
+  }, [token, userId]);
 
   // Calculate sleep hours from raw data
   const sleepHours = useMemo(() => {

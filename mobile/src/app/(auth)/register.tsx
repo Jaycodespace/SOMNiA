@@ -55,7 +55,7 @@ export default function Register() {
   }, []);
 
   const router = useRouter();
-  const backendUrl = 'http://192.168.1.8:4000';
+  const backendUrl = 'http://172.20.10.2:4000';
 
   const handleRegister = async () => {
     console.log('Register button pressed!');
