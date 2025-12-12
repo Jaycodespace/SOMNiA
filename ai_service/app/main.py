@@ -97,6 +97,10 @@ def request_to_tensor(req: PredictRequest) -> torch.Tensor:
     return tensor
 
 
+@app.get("/")
+def root():
+    return {"status": "ok"}
+
 # ---------------------------------------------------------
 # Health check
 # ---------------------------------------------------------

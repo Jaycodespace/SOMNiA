@@ -2,6 +2,6 @@ fastapi
 uvicorn[standard]
 torch
 numpy
-scikit-learn
+scikit-learn==1.6.1
 joblib
 python-dotenv

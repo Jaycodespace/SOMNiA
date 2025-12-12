@@ -82,7 +82,7 @@ const DashboardCard = ({ onActionClick, activeView = 'health' }) => {
     {
       icon: BeakerIcon,
       label: 'AI Prediction',
-      value: 'Sleep Risk Analysis (TBA)',
+      value: 'Sleep Insomnia Prediction',
       onClick: () => onActionClick('prediction'),
       id: 'prediction',
     },
