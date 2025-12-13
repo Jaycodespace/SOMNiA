@@ -19,7 +19,7 @@ type Prediction = {
 
 type RiskStatus = 'idle' | 'loading' | 'ok' | 'no-data' | 'error';
 
-const backendUrl = 'http://172.20.10.2:4000';
+const backendUrl = 'https://somnia-api-iuvq.onrender.com';
 
 export default function SleepAnalysis() {
   const { readExerciseSession } = useExerciseSession(new Date());

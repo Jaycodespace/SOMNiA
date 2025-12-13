@@ -50,7 +50,8 @@
             "compileSdkVersion": 35,
             "targetSdkVersion": 35,
             "minSdkVersion": 26,
-            "kotlinVersion": "2.2.20"
+            "kotlinVersion": "2.2.20",
+            "enablePngCrunchInReleaseBuilds": false
           }
         }
       ],

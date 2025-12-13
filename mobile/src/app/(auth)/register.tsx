@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, Image, TextInput, Pressable, Modal } from 'react-native';
+import { View, Text, TouchableOpacity, Image, TextInput, Pressable, Modal, ScrollView} from 'react-native';
 import { useState, useMemo, useCallback } from 'react';
 import { useRouter } from 'expo-router';
 import axios from 'axios';
@@ -55,7 +55,7 @@ export default function Register() {
   }, []);
 
   const router = useRouter();
-  const backendUrl = 'http://172.20.10.2:4000';
+const backendUrl = 'https://somnia-api-iuvq.onrender.com';
 
   const handleRegister = async () => {
     console.log('Register button pressed!');
@@ -109,147 +109,123 @@ export default function Register() {
       <View style={styles.headerContainer}>
         <Image source={require('../../assets/images/somnia.png')} style={styles.logo} resizeMode="contain" />
       </View>
-      <View style={styles.cardNew}>
-        {/* Tab Switcher */}
-        <View style={styles.tabSwitcher}>
-          <Pressable style={styles.tab} onPress={() => router.push('/(auth)/login')}>
-            <Text style={styles.tabText}>Log In</Text>
-          </Pressable>
-          <View style={[styles.tab, styles.tabActive]}><Text style={styles.tabTextActive}>Sign Up</Text></View>
-        </View>
-        {/* Email */}
-        <Text style={styles.label}>Email</Text>
-        <View style={styles.inputRow}>
-          <TextInput
-            style={styles.inputNew}
-            placeholder="Enter your email"
-            placeholderTextColor="#aaa"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
-        </View>
-        {/* Name */}
-        <Text style={styles.label}>Name</Text>
-        <View style={styles.inputRow}>
-          <TextInput
-            style={styles.inputNew}
-            placeholder="Enter your name"
-            placeholderTextColor="#aaa"
-            value={name}
-            onChangeText={setName}
-            autoCapitalize="words"
-          />
-        </View>
-        {/* Password */}
-        <Text style={styles.label}>Password</Text>
-        <View style={styles.inputRow}>
-          <TextInput
-            style={styles.inputNew}
-            placeholder="Enter your password"
-            placeholderTextColor="#aaa"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry={!showPassword}
-          />
-          <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-            <Icon name={showPassword ? 'eye-off' : 'eye'} size={22} color="#888" style={styles.eyeIcon} />
-          </TouchableOpacity>
-        </View>
-        {/* Birthdate */}
-        <Text style={styles.label}>Birthdate</Text>
-        <TouchableOpacity
-          style={styles.inputRow}
-          onPress={() => setShowDatePicker(true)}
-        >
-          <View style={{ flex: 1, justifyContent: 'center', height: 48 }}>
-            <Text style={{ color: birthdate ? '#222' : '#aaa', fontSize: 17 }}>
-              {birthdate ? formattedBirthdate : 'Select birthdate'}
-            </Text>
-          </View>
-          <Icon name="calendar-outline" size={22} color="#888" />
-        </TouchableOpacity>
-        {showDatePicker && (
-          <DateTimePicker
-            value={birthdate || defaultDate}
-            mode="date"
-            display="default"
-            onChange={handleDateChange}
-            maximumDate={defaultDate}
-          />
-        )}
-        {/* Gender */}
-        <Text style={styles.label}>Gender</Text>
-        <TouchableOpacity
-          style={styles.inputRow}
-          onPress={() => setShowGenderDropdown(true)}
-        >
-          <View style={{ flex: 1, justifyContent: 'center', height: 48 }}>
-            <Text style={{ color: gender ? '#222' : '#aaa', fontSize: 17 }}>
-              {genderLabel}
-            </Text>
-          </View>
-          <Icon name="chevron-down" size={22} color="#888" />
-        </TouchableOpacity>
-        {/* Gender Dropdown Modal */}
-        <Modal
-          visible={showGenderDropdown}
-          transparent={true}
-          animationType="fade"
-          onRequestClose={() => setShowGenderDropdown(false)}
-        >
-          <TouchableOpacity
-            style={{
-              flex: 1,
-              backgroundColor: 'rgba(0, 0, 0, 0.5)',
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}
-            activeOpacity={1}
-            onPress={() => setShowGenderDropdown(false)}
-          >
-            <View
-              style={{
-                backgroundColor: '#fff',
-                borderRadius: 12,
-                width: '80%',
-                maxWidth: 400,
-                overflow: 'hidden',
-              }}
-            >
-              {GENDER_OPTIONS.map((option, index) => (
-                <TouchableOpacity
-                  key={option.value}
-                  style={{
-                    paddingVertical: 16,
-                    paddingHorizontal: 20,
-                    borderBottomWidth: index < GENDER_OPTIONS.length - 1 ? 1 : 0,
-                    borderBottomColor: '#e0e0e0',
-                    backgroundColor: gender === option.value ? '#f0f4ff' : '#fff',
-                  }}
-                  onPress={() => handleGenderSelect(option.value)}
-                >
-                  <Text
-                    style={{
-                      fontSize: 16,
-                      color: gender === option.value ? '#3578e5' : '#222',
-                      fontWeight: gender === option.value ? '600' : '400',
-                    }}
-                  >
-                    {option.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </TouchableOpacity>
-        </Modal>
-        {/* Sign Up Button */}
-        <TouchableOpacity style={styles.loginButton} onPress={handleRegister} disabled={isLoading}>
-          <Text style={styles.loginButtonText}>{isLoading ? 'Loading...' : 'Sign Up'}</Text>
-        </TouchableOpacity>
-        <View style={styles.signUpSpacing} />
+      <ScrollView
+  contentContainerStyle={{ paddingBottom: 32 }}
+  keyboardShouldPersistTaps="handled"
+  showsVerticalScrollIndicator={false}
+>
+  <View style={styles.cardNew}>
+    {/* Tab Switcher */}
+    <View style={styles.tabSwitcher}>
+      <Pressable style={styles.tab} onPress={() => router.push('/(auth)/login')}>
+        <Text style={styles.tabText}>Log In</Text>
+      </Pressable>
+      <View style={[styles.tab, styles.tabActive]}>
+        <Text style={styles.tabTextActive}>Sign Up</Text>
       </View>
+    </View>
+
+    {/* Email */}
+    <Text style={styles.label}>Email</Text>
+    <View style={styles.inputRow}>
+      <TextInput
+        style={styles.inputNew}
+        placeholder="Enter your email"
+        placeholderTextColor="#aaa"
+        value={email}
+        onChangeText={setEmail}
+        keyboardType="email-address"
+        autoCapitalize="none"
+      />
+    </View>
+
+    {/* Name */}
+    <Text style={styles.label}>Name</Text>
+    <View style={styles.inputRow}>
+      <TextInput
+        style={styles.inputNew}
+        placeholder="Enter your name"
+        placeholderTextColor="#aaa"
+        value={name}
+        onChangeText={setName}
+        autoCapitalize="words"
+      />
+    </View>
+
+    {/* Password */}
+    <Text style={styles.label}>Password</Text>
+    <View style={styles.inputRow}>
+      <TextInput
+        style={styles.inputNew}
+        placeholder="Enter your password"
+        placeholderTextColor="#aaa"
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry={!showPassword}
+      />
+      <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+        <Icon
+          name={showPassword ? 'eye-off' : 'eye'}
+          size={22}
+          color="#888"
+          style={styles.eyeIcon}
+        />
+      </TouchableOpacity>
+    </View>
+
+    {/* Birthdate */}
+    <Text style={styles.label}>Birthdate</Text>
+    <TouchableOpacity
+      style={styles.inputRow}
+      onPress={() => setShowDatePicker(true)}
+    >
+      <View style={{ flex: 1, justifyContent: 'center', height: 48 }}>
+        <Text style={{ color: birthdate ? '#222' : '#aaa', fontSize: 17 }}>
+          {birthdate ? formattedBirthdate : 'Select birthdate'}
+        </Text>
+      </View>
+      <Icon name="calendar-outline" size={22} color="#888" />
+    </TouchableOpacity>
+
+    {showDatePicker && (
+      <DateTimePicker
+        value={birthdate || defaultDate}
+        mode="date"
+        display="default"
+        onChange={handleDateChange}
+        maximumDate={defaultDate}
+      />
+    )}
+
+    {/* Gender */}
+    <Text style={styles.label}>Gender</Text>
+    <TouchableOpacity
+      style={styles.inputRow}
+      onPress={() => setShowGenderDropdown(true)}
+    >
+      <View style={{ flex: 1, justifyContent: 'center', height: 48 }}>
+        <Text style={{ color: gender ? '#222' : '#aaa', fontSize: 17 }}>
+          {genderLabel}
+        </Text>
+      </View>
+      <Icon name="chevron-down" size={22} color="#888" />
+    </TouchableOpacity>
+
+    {/* Sign Up Button */}
+    <TouchableOpacity
+      style={styles.loginButton}
+      onPress={handleRegister}
+      disabled={isLoading}
+    >
+      <Text style={styles.loginButtonText}>
+        {isLoading ? 'Loading...' : 'Sign Up'}
+      </Text>
+    </TouchableOpacity>
+
+    <View style={styles.signUpSpacing} />
+  </View>
+</ScrollView>
+
     </LinearGradient>
   );
 }

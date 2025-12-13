@@ -17,7 +17,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { syncToDB } from '../utils/syncToDB';
 import { useAuthStore } from '../store/useAuthStore';
 
-const backendUrl = 'http://172.20.10.2:4000';
+const backendUrl = 'https://somnia-api-iuvq.onrender.com';
 
 
 const screenWidth = Dimensions.get("window").width;

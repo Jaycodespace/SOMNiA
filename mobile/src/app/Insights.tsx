@@ -11,7 +11,7 @@ import { useOxygenSaturation } from '../hooks/useSpo2';
 import { useAuthStore } from '../store/useAuthStore';
 import styles from '../assets/styles/insights.styles';
 
-const backendUrl = 'http://172.20.10.2:4000';
+const backendUrl = 'https://somnia-api-iuvq.onrender.com';
 
 interface TrendData {
   title: string;

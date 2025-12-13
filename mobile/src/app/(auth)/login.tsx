@@ -19,7 +19,7 @@ export default function Login() {
     const router = useRouter();
 
     // Use localhost for web development
-    const backendUrl = 'http://172.20.10.2:4000';
+const backendUrl = 'https://somnia-api-iuvq.onrender.com';
 
     const handleLogin = async () => {
         setIsLoading(true);
